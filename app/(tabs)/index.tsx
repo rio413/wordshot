@@ -1,98 +1,439 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * Send screen — the default tab. The single most important UI in the product.
+ *
+ * Goal (DESIGN.md + product brief): word leaves your phone in <10s.
+ * Layout (Thumb-Zone): the input card and the Shoot button are anchored at the
+ * bottom of the viewport so the typing surface and the trigger sit directly under
+ * the user's thumb. Recipient selection lives above the card and scrolls if it
+ * grows; the card itself never moves except to ride the keyboard up via
+ * KeyboardAvoidingView (`behavior="padding"`).
+ */
+import { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Screen } from '@/components/Screen';
+import { Text } from '@/components/Text';
+import { PillButton } from '@/components/PillButton';
+import { Chip, ChipRow } from '@/components/Chip';
+import { ShootableCard, ShootableCardHandle } from '@/components/ShootableCard';
+import { FloatingLabelInput } from '@/components/FloatingLabelInput';
+import { useAuth } from '@/lib/auth';
+import {
+  findFriendByUsername,
+  getRecentRecipients,
+  recordRecentRecipient,
+  sendWord,
+  sendWordToGroup,
+  subscribeToGroups,
+} from '@/lib/db';
+import { Friend, Group, RecipientChoice } from '@/lib/types';
+import { palette, space, type } from '@/constants/theme';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function SendScreen() {
+  const { user, profile } = useAuth();
+  const params = useLocalSearchParams<{ word?: string; note?: string }>();
+  const insets = useSafeAreaInsets();
 
-export default function HomeScreen() {
+  const [word, setWord] = useState(params.word ?? '');
+  const [note, setNote] = useState(params.note ?? '');
+  const [showNote, setShowNote] = useState(!!params.note);
+  const [recents, setRecents] = useState<Friend[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [recipient, setRecipient] = useState<RecipientChoice | null>(null);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [showUsernamePicker, setShowUsernamePicker] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const sentToTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wordInputRef = useRef<TextInput>(null);
+  const cardRef = useRef<ShootableCardHandle>(null);
+
+  useEffect(() => {
+    wordInputRef.current?.focus();
+    if (user) getRecentRecipients(user.uid).then(setRecents).catch(() => {});
+    const unsub = user ? subscribeToGroups(user.uid, setGroups) : undefined;
+    return () => {
+      if (sentToTimer.current) clearTimeout(sentToTimer.current);
+      unsub?.();
+    };
+  }, [user]);
+
+  const canShoot = !!word.trim() && !!recipient && !sending;
+
+  // Fired between Frame 2 (transformation) and Frame 3 (first shot leap) of the
+  // bullet animation. Optimistic clear so the card resets clean once the bullet exits.
+  const onShoot = () => {
+    if (!user || !profile || !recipient) return;
+    const wordSnap = word.trim();
+    const noteSnap = note.trim() || undefined;
+    const recipientSnap = recipient;
+    if (!wordSnap) return;
+
+    setWord('');
+    setNote('');
+    setShowNote(false);
+    setSending(true);
+
+    const sendPromise =
+      recipientSnap.kind === 'friend'
+        ? sendWord({
+            word: wordSnap,
+            note: noteSnap,
+            from: { uid: user.uid, username: profile.username },
+            to: { uid: recipientSnap.value.uid },
+          }).then(() => recordRecentRecipient(user.uid, recipientSnap.value))
+        : sendWordToGroup({
+            word: wordSnap,
+            note: noteSnap,
+            from: { uid: user.uid, username: profile.username },
+            group: recipientSnap.value,
+          });
+
+    const label =
+      recipientSnap.kind === 'friend'
+        ? `@${recipientSnap.value.username}`
+        : recipientSnap.value.name;
+
+    sendPromise
+      .then(() => {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        setSentTo(label);
+        if (sentToTimer.current) clearTimeout(sentToTimer.current);
+        sentToTimer.current = setTimeout(() => setSentTo(null), 2000);
+        if (recipientSnap.kind === 'friend') {
+          getRecentRecipients(user.uid).then(setRecents).catch(() => {});
+        }
+      })
+      .catch((e: any) => {
+        setWord(wordSnap);
+        setNote(noteSnap ?? '');
+        setShowNote(!!noteSnap);
+        setSendError(e?.message ?? "Couldn't send — tap Shoot to try again.");
+      })
+      .finally(() => {
+        setSending(false);
+        wordInputRef.current?.focus();
+      });
+  };
+
+  const onPressSend = () => {
+    if (!word.trim()) {
+      Alert.alert('Type a word first.');
+      return;
+    }
+    if (!recipient) {
+      Alert.alert('Pick someone to send to.');
+      return;
+    }
+    if (sending) return;
+    cardRef.current?.fire();
+  };
+
+  const onSwipeRejected = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    if (!word.trim()) {
+      Alert.alert('Type a word first.');
+    } else if (!recipient) {
+      Alert.alert('Pick someone to send to.');
+    }
+  };
+
+  const onAddByUsername = async () => {
+    setUsernameError(null);
+    const friend = await findFriendByUsername(usernameInput);
+    if (!friend) {
+      setUsernameError('No user found with that username.');
+      return;
+    }
+    setRecipient({ kind: 'friend', value: friend });
+    setUsernameInput('');
+    setUsernameError(null);
+    setShowUsernamePicker(false);
+  };
+
+  // Bottom inset only applies when the keyboard is closed; KAV swallows it once
+  // the keyboard rises, so the card sits flush above the keyboard either way.
+  const thumbZonePadBottom = Math.max(insets.bottom, space.s3);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <Screen tone="cream" padded={false}>
+      <KeyboardAvoidingView
+        style={styles.fill}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+        <View style={styles.fill}>
+          {/* Top region: header + recipient picker. Scrolls if it grows. */}
+          <ScrollView
+            style={styles.fill}
+            contentContainerStyle={styles.topScroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text variant="h1" style={{ marginBottom: space.s4 }}>
+              Send a word
+            </Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+            <View>
+              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                Send to
+              </Text>
+              <View style={{ marginTop: space.s2 }}>
+                {recipient ? (
+                  <View style={styles.selectedRow}>
+                    <View style={styles.selectedTag}>
+                      <Ionicons
+                        name={recipient.kind === 'group' ? 'people' : 'person'}
+                        size={16}
+                        color={palette.white}
+                      />
+                      <Text variant="smallStrong" color={palette.white}>
+                        {recipient.kind === 'friend'
+                          ? `@${recipient.value.username}`
+                          : recipient.value.name}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                      {recipient.kind === 'group' && recipient.value.memberUids.length > 0 && (
+                        <Text variant="micro" color={palette.textBlackSoft}>
+                          {recipient.value.memberUids.length}{' '}
+                          {recipient.value.memberUids.length === 1 ? 'person' : 'people'}
+                        </Text>
+                      )}
+                      <Pressable onPress={() => setRecipient(null)} hitSlop={8}>
+                        <Text variant="smallStrong" color={palette.textBlackSoft}>
+                          Change
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <ChipRow>
+                    {recents.map((r) => (
+                      <Chip
+                        key={r.uid}
+                        label={`@${r.username}`}
+                        iconLeft={<Ionicons name="person" size={12} color={palette.greenAccent} />}
+                        onPress={() => setRecipient({ kind: 'friend', value: r })}
+                        style={styles.angularChip}
+                      />
+                    ))}
+                    {groups.map((g) => (
+                      <Chip
+                        key={g.id}
+                        label={g.name}
+                        iconLeft={<Ionicons name="people" size={12} color={palette.greenAccent} />}
+                        onPress={() => setRecipient({ kind: 'group', value: g })}
+                        style={styles.angularChip}
+                      />
+                    ))}
+                    <Chip
+                      label="+ Add by username"
+                      onPress={() => setShowUsernamePicker(true)}
+                      style={styles.angularChip}
+                    />
+                  </ChipRow>
+                )}
+              </View>
+
+              {showUsernamePicker && !recipient ? (
+                <View style={{ marginTop: space.s3, gap: space.s2 }}>
+                  <FloatingLabelInput
+                    label="Username"
+                    value={usernameInput}
+                    onChangeText={(t) => { setUsernameInput(t); if (usernameError) setUsernameError(null); }}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    onSubmitEditing={onAddByUsername}
+                    error={usernameError ?? undefined}
+                  />
+                  <PillButton
+                    label="Find friend"
+                    variant="outlined"
+                    onPress={onAddByUsername}
+                    style={styles.angularButton}
+                  />
+                </View>
+              ) : null}
+            </View>
+          </ScrollView>
+
+          {/* Bottom thumb zone: anchored input card + Shoot trigger. */}
+          <View style={[styles.thumbZone, { paddingBottom: thumbZonePadBottom }]}>
+            {sentTo ? (
+              <View style={styles.sentBanner}>
+                <Ionicons name="checkmark" size={14} color={palette.white} />
+                <Text variant="smallStrong" color={palette.white}>
+                  Sent to {sentTo}
+                </Text>
+              </View>
+            ) : null}
+            {sendError ? (
+              <View style={styles.errorBanner}>
+                <Ionicons name="close" size={14} color={palette.white} />
+                <Text variant="smallStrong" color={palette.white}>
+                  {sendError}
+                </Text>
+              </View>
+            ) : null}
+            <ShootableCard
+              ref={cardRef}
+              canShoot={canShoot}
+              onShoot={onShoot}
+              onRejected={onSwipeRejected}
+            >
+              <View style={styles.cardHeader}>
+                <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                  Word
+                </Text>
+                <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                  Swipe ↑ to shoot
+                </Text>
+              </View>
+              <TextInput
+                ref={wordInputRef}
+                value={word}
+                onChangeText={(text) => { setWord(text); if (sendError) setSendError(null); }}
+                placeholder="ephemeral"
+                placeholderTextColor={palette.textBlackSoft}
+                autoCorrect={false}
+                autoCapitalize="none"
+                returnKeyType="next"
+                style={styles.wordInput}
+              />
+              {showNote ? (
+                <FloatingLabelInput
+                  label="Note (optional)"
+                  value={note}
+                  onChangeText={setNote}
+                  multiline
+                  style={{ minHeight: 60, textAlignVertical: 'top' }}
+                />
+              ) : (
+                <Pressable onPress={() => setShowNote(true)} style={styles.noteToggle}>
+                  <Ionicons name="add-circle-outline" size={16} color={palette.greenAccent} />
+                  <Text variant="smallStrong" color={palette.greenAccent}>
+                    Add a note
+                  </Text>
+                </Pressable>
+              )}
+            </ShootableCard>
+
+            <PillButton
+              label={sending ? 'Sending…' : 'Shoot'}
+              onPress={onPressSend}
+              loading={sending}
+              fullWidth
+              size="large"
+              variant="dark"
+              iconLeft={
+                sending ? null : <Ionicons name="arrow-up" size={18} color={palette.white} />
+              }
+              style={styles.shootButton}
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  fill: { flex: 1 },
+  topScroll: {
+    paddingHorizontal: space.s3,
+    paddingTop: space.s4,
+    paddingBottom: space.s3,
+  },
+  thumbZone: {
+    paddingHorizontal: space.s3,
+    paddingTop: space.s3,
+    gap: space.s3,
+    backgroundColor: palette.neutralWarm,
+    borderTopColor: palette.black,
+    borderTopWidth: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  wordInput: {
+    ...type.display,
+    fontSize: 40,
+    lineHeight: 48,
+    marginTop: space.s2,
+    marginBottom: space.s3,
+    color: palette.textBlack,
+  },
+  noteToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    paddingVertical: 4,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  selectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  selectedTag: {
+    backgroundColor: palette.black,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: palette.black,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  angularChip: {
+    borderRadius: 0,
+    borderWidth: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  angularButton: {
+    borderRadius: 0,
+    borderWidth: 2,
+  },
+  shootButton: {
+    borderRadius: 0,
+    borderWidth: 2,
+    borderColor: palette.black,
+  },
+  sentBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: palette.black,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: palette.red,
+    borderWidth: 2,
+    borderColor: palette.red,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
 });
