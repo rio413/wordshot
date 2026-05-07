@@ -20,12 +20,14 @@ type AuthUser = {
   uid: string;
   email: string | null;
   displayName: string | null;
+  providers: string[];
 } | null;
 
 type AuthState = {
   user: AuthUser;
   profile: UserProfile | null;
   ready: boolean;
+  isEmailUser: boolean;
 };
 
 type AuthAPI = AuthState & {
@@ -34,6 +36,8 @@ type AuthAPI = AuthState & {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: (password?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthAPI | null>(null);
@@ -56,7 +60,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setReady(true);
         return;
       }
-      setUser({ uid: u.uid, email: u.email, displayName: u.displayName });
+      setUser({
+        uid: u.uid,
+        email: u.email,
+        displayName: u.displayName,
+        providers: u.providerData.map((p) => p.providerId),
+      });
       try {
         const snap = await collections.users().doc(u.uid).get();
         setProfile(snap.exists() ? (snap.data() as UserProfile) : null);
@@ -73,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       profile,
       ready,
+      isEmailUser: user?.providers?.includes('password') ?? false,
 
       async signInWithEmail(email, password) {
         if (DEMO_MODE) return enterDemo(setUser, setProfile, email);
@@ -91,8 +101,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error('Username must be 2–20 chars: a–z, 0–9, _');
         }
 
-        // Optimistic pre-check — narrows the race window. The real guarantee
-        // is the rules-enforced create on usernames/{handle} below.
         const taken = await collections.usernames().doc(handle).get();
         if (taken.exists()) throw new Error('That username is taken.');
 
@@ -123,13 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await batch.commit();
           setProfile(profileDoc);
         } catch (e: any) {
-          // Roll back the orphan auth user so the email isn't stuck registered.
-          // Without this, the user can't retry signup — they'd hit
-          // 'auth/email-already-in-use' on every attempt.
           await u.delete().catch(() => {});
-
-          // Rules reject the usernames/{handle} create when someone wins the
-          // race between our pre-check and our commit.
           if (e?.code === 'firestore/permission-denied') {
             throw new Error('That username was just claimed. Try another.');
           }
@@ -156,6 +158,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         await auth().signOut();
       },
+
+      async changePassword(currentPassword, newPassword) {
+        if (DEMO_MODE) return;
+        const currentUser = auth().currentUser;
+        if (!currentUser?.email) throw new Error('Change password requires email sign-in.');
+        const credential = auth.EmailAuthProvider.credential(currentUser.email, currentPassword);
+        try {
+          await currentUser.reauthenticateWithCredential(credential);
+        } catch {
+          throw new Error('Current password is incorrect.');
+        }
+        try {
+          await currentUser.updatePassword(newPassword);
+        } catch (e: any) {
+          throw new Error(authErrorMessage(e));
+        }
+      },
+
+      async deleteAccount(password?) {
+        if (DEMO_MODE) {
+          demo.signOut();
+          setUser(null);
+          setProfile(null);
+          return;
+        }
+        const currentUser = auth().currentUser;
+        if (!currentUser) throw new Error('Not signed in.');
+
+        // Re-authenticate email/password users before destructive action.
+        const isEmail = currentUser.providerData.some((p) => p.providerId === 'password');
+        if (isEmail) {
+          if (!password) throw new Error('Enter your password to confirm.');
+          const credential = auth.EmailAuthProvider.credential(currentUser.email!, password);
+          try {
+            await currentUser.reauthenticateWithCredential(credential);
+          } catch {
+            throw new Error('Incorrect password.');
+          }
+        }
+
+        // Delete Firestore records. savedWords subcollection is cleaned server-side.
+        try {
+          const batch = firestore().batch();
+          batch.delete(collections.users().doc(currentUser.uid));
+          if (profile?.username) {
+            batch.delete(collections.usernames().doc(profile.username));
+          }
+          await batch.commit();
+        } catch {
+          // Best-effort; proceed to auth deletion regardless.
+        }
+
+        await currentUser.delete();
+      },
     }),
     [user, profile, ready],
   );
@@ -179,7 +235,7 @@ function enterDemo(
   const me = demo.getUser()!;
   if (username) me.username = username.trim().toLowerCase();
   me.email = email;
-  setUser({ uid: me.uid, email, displayName: me.displayName ?? null });
+  setUser({ uid: me.uid, email, displayName: me.displayName ?? null, providers: ['password'] });
   setProfile(me);
 }
 
