@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   simButton: {
     borderWidth: 1,
     borderColor: palette.black14,
-    borderRadius: 0,
+    borderRadius: 6,
     paddingHorizontal: space.s2,
     paddingVertical: 4,
     marginBottom: 2,
@@ -434,10 +434,13 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: palette.white,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
+    borderRadius: 12,
     padding: space.s3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   metaRow: {
     flexDirection: 'row',
@@ -452,8 +455,8 @@ const styles = StyleSheet.create({
   bulletSquare: {
     width: 28,
     height: 28,
-    backgroundColor: palette.black,
-    borderRadius: 0,
+    backgroundColor: palette.greenAccent,
+    borderRadius: 999,
   },
   fragBase: {
     position: 'absolute',
@@ -465,8 +468,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fragPiece: {
-    backgroundColor: palette.black,
-    borderRadius: 0,
+    backgroundColor: palette.textBlackSoft,
+    borderRadius: 4,
   },
   empty: {
     paddingTop: space.s9,

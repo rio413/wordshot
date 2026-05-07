@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Clipboard, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
@@ -28,6 +28,7 @@ export default function GroupEditScreen() {
   const [existingGroup, setExistingGroup] = useState<Group | null>(null);
   const [name, setName] = useState('');
   const [members, setMembers] = useState<Friend[]>([]);
+  const [isPublic, setIsPublic] = useState(false);
   const [usernameInput, setUsernameInput] = useState('');
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -41,6 +42,7 @@ export default function GroupEditScreen() {
         setExistingGroup(found);
         setName(found.name);
         setMembers(found.members);
+        setIsPublic(found.isPublic);
       }
     });
     return unsub;
@@ -84,9 +86,9 @@ export default function GroupEditScreen() {
     setSaving(true);
     try {
       if (isNew) {
-        await createGroup({ ownerUid: user.uid, name: trimmed, members });
+        await createGroup({ ownerUid: user.uid, name: trimmed, members, isPublic });
       } else if (existingGroup) {
-        await updateGroup(existingGroup.id, { name: trimmed, members });
+        await updateGroup(existingGroup.id, { name: trimmed, members, isPublic });
       }
       router.back();
     } catch (e: any) {
@@ -111,6 +113,12 @@ export default function GroupEditScreen() {
     ]);
   };
 
+  const onCopyCode = () => {
+    if (!existingGroup?.joinCode) return;
+    Clipboard.setString(existingGroup.joinCode);
+    Alert.alert('Copied!', `Share "${existingGroup.joinCode}" so others can join.`);
+  };
+
   return (
     <Screen tone="cream">
       <ScrollView
@@ -131,6 +139,48 @@ export default function GroupEditScreen() {
           returnKeyType="next"
           onSubmitEditing={() => inputRef.current?.focus()}
         />
+
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleLeft}>
+            <Ionicons
+              name={isPublic ? 'earth' : 'lock-closed'}
+              size={18}
+              color={isPublic ? palette.greenAccent : palette.textBlackSoft}
+            />
+            <View>
+              <Text variant="bodyMedium">{isPublic ? 'Public group' : 'Private group'}</Text>
+              <Text variant="micro" color={palette.textBlackSoft}>
+                {isPublic
+                  ? 'Anyone with the code can join'
+                  : 'Invite only — share your code with people you choose'}
+              </Text>
+            </View>
+          </View>
+          <Switch
+            value={isPublic}
+            onValueChange={setIsPublic}
+            trackColor={{ false: palette.ceramic, true: palette.greenAccent }}
+            thumbColor={palette.white}
+          />
+        </View>
+
+        {!isNew && existingGroup?.joinCode && (
+          <View style={styles.codeRow}>
+            <View>
+              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                Join code
+              </Text>
+              <Text variant="h2" style={{ letterSpacing: 4, marginTop: 2 }}>
+                {existingGroup.joinCode}
+              </Text>
+            </View>
+            <PillButton
+              label="Copy"
+              variant="outlined"
+              onPress={onCopyCode}
+            />
+          </View>
+        )}
 
         <Text variant="uppercaseLabel" color={palette.textBlackSoft} style={{ marginTop: space.s4 }}>
           Members ({members.length}/{MAX_MEMBERS})
@@ -193,5 +243,36 @@ const styles = StyleSheet.create({
   content: {
     paddingTop: space.s4,
     paddingBottom: space.s6,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: space.s4,
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s3,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.ceramic,
+    borderRadius: 12,
+  },
+  toggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s2,
+    flex: 1,
+    marginRight: space.s3,
+  },
+  codeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: space.s4,
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s3,
+    backgroundColor: palette.white,
+    borderWidth: 1,
+    borderColor: palette.ceramic,
+    borderRadius: 12,
   },
 });

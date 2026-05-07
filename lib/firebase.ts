@@ -12,4 +12,5 @@ export const collections = {
   savedWords: (uid: string) =>
     firestore().collection('users').doc(uid).collection('savedWords'),
   groups: () => firestore().collection('groups'),
+  joinCodes: () => firestore().collection('joinCodes'),
 };

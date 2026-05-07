@@ -34,6 +34,7 @@ export type Group = {
   ownerUid: string;
   mode: 'private' | 'broadcast' | 'community';
   isPublic: boolean;
+  joinCode: string;
   memberUids: string[];
   members: Friend[];
   createdAt: number;

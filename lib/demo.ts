@@ -37,9 +37,10 @@ const state = {
   bankSubs: new Set<(words: WordCard[]) => void>(),
   inboxSubs: new Set<(cards: WordCard[]) => void>(),
   groupSubs: new Set<(groups: Group[]) => void>(),
+  memberGroupSubs: new Set<(groups: Group[]) => void>(),
 };
 
-// Pre-seed a couple of incoming cards so the inbox isn't empty on first run.
+// Pre-seed incoming cards so inbox isn't empty on first run.
 state.cards.push(
   {
     id: 'demo-card-1',
@@ -65,6 +66,19 @@ state.cards.push(
   },
 );
 
+// Pre-seed a group the user is a member of (but not owner).
+state.groups.push({
+  id: 'demo-group-seed',
+  name: 'Book Club',
+  ownerUid: 'demo-mira',
+  mode: 'private',
+  isPublic: false,
+  joinCode: 'BOOK01',
+  memberUids: ['demo-me'],
+  members: [{ uid: 'demo-me', username: 'you', displayName: 'You' }],
+  createdAt: Date.now() - 1000 * 60 * 60 * 24,
+});
+
 function notifyBank() {
   for (const fn of state.bankSubs) fn([...state.saved]);
 }
@@ -72,7 +86,10 @@ function notifyInbox() {
   for (const fn of state.inboxSubs) fn(state.cards.filter((c) => c.status === 'pending'));
 }
 function notifyGroups() {
-  for (const fn of state.groupSubs) fn([...state.groups]);
+  const owned = state.groups.filter((g) => g.ownerUid === me.uid);
+  for (const fn of state.groupSubs) fn([...owned]);
+  const joined = state.groups.filter((g) => g.ownerUid !== me.uid && g.memberUids.includes(me.uid));
+  for (const fn of state.memberGroupSubs) fn([...joined]);
 }
 
 export const demo = {
@@ -136,13 +153,16 @@ export const demo = {
   },
 
   // ---- Groups ----
-  createGroup(params: { ownerUid: string; name: string; members: Friend[] }): Group {
+  createGroup(params: { ownerUid: string; name: string; members: Friend[]; isPublic?: boolean }): Group {
+    const id = `demo-group-${Date.now().toString(36)}`;
+    const joinCode = id.replace(/[^A-Za-z0-9]/g, '').slice(0, 6).toUpperCase();
     const group: Group = {
-      id: `demo-group-${Date.now().toString(36)}`,
+      id,
       name: params.name.trim(),
       ownerUid: params.ownerUid,
       mode: 'private',
-      isPublic: false,
+      isPublic: params.isPublic ?? false,
+      joinCode,
       memberUids: params.members.map((m) => m.uid),
       members: params.members,
       createdAt: Date.now(),
@@ -151,10 +171,11 @@ export const demo = {
     notifyGroups();
     return group;
   },
-  updateGroup(groupId: string, updates: { name?: string; members?: Friend[] }) {
+  updateGroup(groupId: string, updates: { name?: string; members?: Friend[]; isPublic?: boolean }) {
     const group = state.groups.find((g) => g.id === groupId);
     if (!group) return;
     if (updates.name !== undefined) group.name = updates.name.trim();
+    if (updates.isPublic !== undefined) group.isPublic = updates.isPublic;
     if (updates.members !== undefined) {
       group.members = updates.members;
       group.memberUids = updates.members.map((m) => m.uid);
@@ -167,10 +188,32 @@ export const demo = {
   },
   subscribeGroups(fn: (groups: Group[]) => void) {
     state.groupSubs.add(fn);
-    fn([...state.groups]);
+    fn(state.groups.filter((g) => g.ownerUid === me.uid));
     return () => {
       state.groupSubs.delete(fn);
     };
+  },
+  subscribeMemberGroups(fn: (groups: Group[]) => void) {
+    state.memberGroupSubs.add(fn);
+    fn(state.groups.filter((g) => g.ownerUid !== me.uid && g.memberUids.includes(me.uid)));
+    return () => {
+      state.memberGroupSubs.delete(fn);
+    };
+  },
+  findGroupByCode(code: string): { groupId: string; groupName: string } | null {
+    const cleaned = code.trim().toUpperCase();
+    const group = state.groups.find((g) => g.joinCode === cleaned);
+    if (!group) return null;
+    return { groupId: group.id, groupName: group.name };
+  },
+  joinGroup(groupId: string, user: Friend) {
+    const group = state.groups.find((g) => g.id === groupId);
+    if (!group) throw new Error('Group not found');
+    if (group.memberUids.includes(user.uid)) throw new Error('Already a member of this group');
+    if (group.memberUids.length >= 25) throw new Error('This group is full');
+    group.memberUids.push(user.uid);
+    group.members.push({ uid: user.uid, username: user.username, displayName: user.displayName ?? null });
+    notifyGroups();
   },
   sendWordToGroup(params: {
     word: string;

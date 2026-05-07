@@ -1,12 +1,10 @@
 /**
  * Send screen — the default tab. The single most important UI in the product.
  *
- * Goal (DESIGN.md + product brief): word leaves your phone in <10s.
+ * Goal: word leaves your phone in <10s.
  * Layout (Thumb-Zone): the input card and the Shoot button are anchored at the
  * bottom of the viewport so the typing surface and the trigger sit directly under
- * the user's thumb. Recipient selection lives above the card and scrolls if it
- * grows; the card itself never moves except to ride the keyboard up via
- * KeyboardAvoidingView (`behavior="padding"`).
+ * the user's thumb. Recipient selection lives above and scrolls if it grows.
  */
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -39,7 +37,7 @@ import {
   subscribeToGroups,
 } from '@/lib/db';
 import { Friend, Group, RecipientChoice } from '@/lib/types';
-import { palette, space, type } from '@/constants/theme';
+import { palette, radii, space, type } from '@/constants/theme';
 
 export default function SendScreen() {
   const { user, profile } = useAuth();
@@ -74,8 +72,6 @@ export default function SendScreen() {
 
   const canShoot = !!word.trim() && !!recipient && !sending;
 
-  // Fired between Frame 2 (transformation) and Frame 3 (first shot leap) of the
-  // bullet animation. Optimistic clear so the card resets clean once the bullet exits.
   const onShoot = () => {
     if (!user || !profile || !recipient) return;
     const wordSnap = word.trim();
@@ -165,8 +161,6 @@ export default function SendScreen() {
     setShowUsernamePicker(false);
   };
 
-  // Bottom inset only applies when the keyboard is closed; KAV swallows it once
-  // the keyboard rises, so the card sits flush above the keyboard either way.
   const thumbZonePadBottom = Math.max(insets.bottom, space.s3);
 
   return (
@@ -177,7 +171,7 @@ export default function SendScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
         <View style={styles.fill}>
-          {/* Top region: header + recipient picker. Scrolls if it grows. */}
+          {/* Top region: header + recipient picker */}
           <ScrollView
             style={styles.fill}
             contentContainerStyle={styles.topScroll}
@@ -229,7 +223,6 @@ export default function SendScreen() {
                         label={`@${r.username}`}
                         iconLeft={<Ionicons name="person" size={12} color={palette.greenAccent} />}
                         onPress={() => setRecipient({ kind: 'friend', value: r })}
-                        style={styles.angularChip}
                       />
                     ))}
                     {groups.map((g) => (
@@ -238,13 +231,11 @@ export default function SendScreen() {
                         label={g.name}
                         iconLeft={<Ionicons name="people" size={12} color={palette.greenAccent} />}
                         onPress={() => setRecipient({ kind: 'group', value: g })}
-                        style={styles.angularChip}
                       />
                     ))}
                     <Chip
                       label="+ Add by username"
                       onPress={() => setShowUsernamePicker(true)}
-                      style={styles.angularChip}
                     />
                   </ChipRow>
                 )}
@@ -265,18 +256,17 @@ export default function SendScreen() {
                     label="Find friend"
                     variant="outlined"
                     onPress={onAddByUsername}
-                    style={styles.angularButton}
                   />
                 </View>
               ) : null}
             </View>
           </ScrollView>
 
-          {/* Bottom thumb zone: anchored input card + Shoot trigger. */}
+          {/* Bottom thumb zone: anchored input card + Shoot trigger */}
           <View style={[styles.thumbZone, { paddingBottom: thumbZonePadBottom }]}>
             {sentTo ? (
               <View style={styles.sentBanner}>
-                <Ionicons name="checkmark" size={14} color={palette.white} />
+                <Ionicons name="checkmark-circle" size={15} color={palette.white} />
                 <Text variant="smallStrong" color={palette.white}>
                   Sent to {sentTo}
                 </Text>
@@ -284,7 +274,7 @@ export default function SendScreen() {
             ) : null}
             {sendError ? (
               <View style={styles.errorBanner}>
-                <Ionicons name="close" size={14} color={palette.white} />
+                <Ionicons name="alert-circle" size={15} color={palette.white} />
                 <Text variant="smallStrong" color={palette.white}>
                   {sendError}
                 </Text>
@@ -296,14 +286,9 @@ export default function SendScreen() {
               onShoot={onShoot}
               onRejected={onSwipeRejected}
             >
-              <View style={styles.cardHeader}>
-                <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
-                  Word
-                </Text>
-                <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
-                  Swipe ↑ to shoot
-                </Text>
-              </View>
+              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                Word
+              </Text>
               <TextInput
                 ref={wordInputRef}
                 value={word}
@@ -339,11 +324,10 @@ export default function SendScreen() {
               loading={sending}
               fullWidth
               size="large"
-              variant="dark"
+              variant="primary"
               iconLeft={
                 sending ? null : <Ionicons name="arrow-up" size={18} color={palette.white} />
               }
-              style={styles.shootButton}
             />
           </View>
         </View>
@@ -363,14 +347,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.s3,
     paddingTop: space.s3,
     gap: space.s3,
-    backgroundColor: palette.neutralWarm,
-    borderTopColor: palette.black,
-    borderTopWidth: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: palette.white,
+    borderTopWidth: 1,
+    borderTopColor: palette.ceramic,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -2 },
+    elevation: 4,
   },
   wordInput: {
     ...type.display,
@@ -392,48 +376,31 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   selectedTag: {
-    backgroundColor: palette.black,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 0,
-    borderWidth: 2,
-    borderColor: palette.black,
+    backgroundColor: palette.greenAccent,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radii.pill,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  angularChip: {
-    borderRadius: 0,
-    borderWidth: 2,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  angularButton: {
-    borderRadius: 0,
-    borderWidth: 2,
-  },
-  shootButton: {
-    borderRadius: 0,
-    borderWidth: 2,
-    borderColor: palette.black,
   },
   sentBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-start',
-    backgroundColor: palette.black,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    backgroundColor: palette.greenAccent,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: radii.pill,
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: palette.red,
-    borderWidth: 2,
-    borderColor: palette.red,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: radii.pill,
   },
 });

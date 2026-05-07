@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -74,6 +74,10 @@ export default function Login() {
           </View>
 
           <View style={styles.form}>
+            <Text variant="h2" style={styles.modeTitle}>
+              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+            </Text>
+
             {mode === 'signup' ? (
               <FloatingLabelInput
                 label="Username"
@@ -104,12 +108,18 @@ export default function Login() {
               fullWidth
               size="large"
             />
-            <PillButton
-              label={mode === 'signin' ? "I'm new — sign up" : 'I have an account'}
-              variant="outlined"
+
+            <Pressable
               onPress={() => setMode((m) => (m === 'signin' ? 'signup' : 'signin'))}
-              fullWidth
-            />
+              style={styles.toggleRow}
+            >
+              <Text variant="small" color={palette.textBlackSoft}>
+                {mode === 'signin' ? "New to Wordshot? " : 'Already have an account? '}
+              </Text>
+              <Text variant="smallStrong" color={palette.greenAccent}>
+                {mode === 'signin' ? 'Sign up' : 'Sign in'}
+              </Text>
+            </Pressable>
           </View>
 
           <View style={styles.divider}>
@@ -143,6 +153,8 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, justifyContent: 'center', paddingVertical: space.s7 },
   header: { alignItems: 'center', marginBottom: space.s7 },
   form: { gap: space.s3 },
+  modeTitle: { textAlign: 'center', marginBottom: space.s1 },
+  toggleRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingVertical: space.s1 },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',

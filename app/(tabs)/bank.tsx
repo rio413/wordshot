@@ -3,6 +3,7 @@ import { FlatList, Modal, Pressable, RefreshControl, StyleSheet, View } from 're
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
+import { Card } from '@/components/Card';
 import { FloatingLabelInput } from '@/components/FloatingLabelInput';
 import { useAuth } from '@/lib/auth';
 import { subscribeToBank } from '@/lib/db';
@@ -108,8 +109,8 @@ export default function BankScreen() {
 
 function WordRow({ word, onPress }: { word: WordCard; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress}>
-      <View style={styles.wordCard}>
+    <Pressable onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
+      <Card style={styles.wordCard}>
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
             <Text variant="bodyMedium">{word.word}</Text>
@@ -123,9 +124,12 @@ function WordRow({ word, onPress }: { word: WordCard; onPress: () => void }) {
               <Text variant="micro">@{word.fromUsername}</Text>
             </View>
           </View>
-          <Ionicons name="bookmark" size={16} color={palette.gold} />
+          <View style={styles.rowRight}>
+            <Ionicons name="bookmark" size={14} color={palette.gold} />
+            <Ionicons name="chevron-forward" size={16} color={palette.textBlackSoft} />
+          </View>
         </View>
-      </View>
+      </Card>
     </Pressable>
   );
 }
@@ -155,16 +159,21 @@ const styles = StyleSheet.create({
     paddingBottom: space.s8,
   },
   wordCard: {
-    backgroundColor: palette.white,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
-    padding: space.s3,
+    paddingVertical: space.s3,
+    paddingHorizontal: space.s3,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s3,
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s2,
+  },
+  pressed: {
+    opacity: 0.7,
   },
   metaRow: {
     flexDirection: 'row',
@@ -184,10 +193,13 @@ const styles = StyleSheet.create({
   },
   detailCard: {
     backgroundColor: palette.white,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
+    borderRadius: 16,
     padding: space.s4,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
   },
   detailTopRow: {
     flexDirection: 'row',

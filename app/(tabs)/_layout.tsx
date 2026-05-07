@@ -1,8 +1,19 @@
+import { useEffect, useState } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { palette } from '@/constants/theme';
+import { useAuth } from '@/lib/auth';
+import { subscribeToInbox } from '@/lib/db';
 
 export default function TabsLayout() {
+  const { user } = useAuth();
+  const [inboxCount, setInboxCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeToInbox(user.uid, (cards) => setInboxCount(cards.length));
+  }, [user]);
+
   return (
     <Tabs
       screenOptions={{
@@ -27,6 +38,8 @@ export default function TabsLayout() {
         name="incoming"
         options={{
           title: 'Incoming',
+          tabBarBadge: inboxCount > 0 ? inboxCount : undefined,
+          tabBarBadgeStyle: { backgroundColor: palette.greenAccent, fontSize: 11 },
           tabBarIcon: ({ color, size }) => <Ionicons name="mail" size={size} color={color} />,
         }}
       />

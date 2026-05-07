@@ -9,10 +9,22 @@
  *   users/{uid}/savedWords/{cardId}      → WordCard (mirror, post-save)
  *   usernames/{handle}                   → { uid }
  *   cards/{cardId}                       → WordCard (in-flight + history)
+ *   groups/{groupId}                     → Group
+ *   joinCodes/{code}                     → { groupId, groupName, ownerUid }
  */
 import { collections, firestore } from './firebase';
 import { Friend, Group, UserProfile, WordCard } from './types';
 import { DEMO_MODE, demo } from './demo';
+
+function generateJoinCode(): string {
+  // Unambiguous alphanumeric: no 0/O, 1/I/L
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
 
 export async function findFriendByUsername(handle: string): Promise<Friend | null> {
   if (DEMO_MODE) return demo.findFriendByUsername(handle);
@@ -153,9 +165,11 @@ export async function createGroup(params: {
   ownerUid: string;
   name: string;
   members: Friend[];
+  isPublic?: boolean;
 }): Promise<Group> {
   if (DEMO_MODE) return demo.createGroup(params);
   const ref = collections.groups().doc();
+  const joinCode = generateJoinCode();
   const sanitizedMembers = params.members.map((m) => ({
     uid: m.uid,
     username: m.username,
@@ -166,18 +180,26 @@ export async function createGroup(params: {
     name: params.name.trim(),
     ownerUid: params.ownerUid,
     mode: 'private',
-    isPublic: false,
+    isPublic: params.isPublic ?? false,
+    joinCode,
     memberUids: sanitizedMembers.map((m) => m.uid),
     members: sanitizedMembers,
     createdAt: Date.now(),
   };
-  await ref.set(group);
+  const batch = firestore().batch();
+  batch.set(ref, group);
+  batch.set(collections.joinCodes().doc(joinCode), {
+    groupId: ref.id,
+    groupName: group.name,
+    ownerUid: params.ownerUid,
+  });
+  await batch.commit();
   return group;
 }
 
 export async function updateGroup(
   groupId: string,
-  updates: { name?: string; members?: Friend[] },
+  updates: { name?: string; members?: Friend[]; isPublic?: boolean },
 ): Promise<void> {
   if (DEMO_MODE) {
     demo.updateGroup(groupId, updates);
@@ -185,6 +207,7 @@ export async function updateGroup(
   }
   const patch: Partial<Group> = {};
   if (updates.name !== undefined) patch.name = updates.name.trim();
+  if (updates.isPublic !== undefined) patch.isPublic = updates.isPublic;
   if (updates.members !== undefined) {
     const sanitized = updates.members.map((m) => ({
       uid: m.uid,
@@ -202,7 +225,14 @@ export async function deleteGroup(groupId: string): Promise<void> {
     demo.deleteGroup(groupId);
     return;
   }
-  await collections.groups().doc(groupId).delete();
+  const snap = await collections.groups().doc(groupId).get();
+  const group = snap.exists() ? (snap.data() as Group) : null;
+  const batch = firestore().batch();
+  batch.delete(collections.groups().doc(groupId));
+  if (group?.joinCode) {
+    batch.delete(collections.joinCodes().doc(group.joinCode));
+  }
+  await batch.commit();
 }
 
 export function subscribeToGroups(
@@ -220,6 +250,57 @@ export function subscribeToGroups(
       },
       () => {},
     );
+}
+
+export function subscribeToMemberGroups(
+  uid: string,
+  onChange: (groups: Group[]) => void,
+): () => void {
+  if (DEMO_MODE) return demo.subscribeMemberGroups(onChange);
+  return collections
+    .groups()
+    .where('memberUids', 'array-contains', uid)
+    .onSnapshot(
+      (snap: any) => {
+        if (!snap) return;
+        onChange(snap.docs.map((d: any) => d.data() as Group));
+      },
+      () => {},
+    );
+}
+
+export async function findGroupByCode(
+  code: string,
+): Promise<{ groupId: string; groupName: string } | null> {
+  if (DEMO_MODE) return demo.findGroupByCode(code);
+  const cleaned = code.trim().toUpperCase();
+  if (!cleaned) return null;
+  const snap = await collections.joinCodes().doc(cleaned).get();
+  if (!snap.exists()) return null;
+  const { groupId, groupName } = snap.data() as { groupId: string; groupName: string };
+  return { groupId, groupName };
+}
+
+export async function joinGroup(groupId: string, user: Friend): Promise<void> {
+  if (DEMO_MODE) {
+    demo.joinGroup(groupId, user);
+    return;
+  }
+  const ref = collections.groups().doc(groupId);
+  await firestore().runTransaction(async (tx: any) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error('Group not found');
+    const group = snap.data() as Group;
+    if (group.memberUids.includes(user.uid)) throw new Error('Already a member of this group');
+    if (group.memberUids.length >= 25) throw new Error('This group is full');
+    tx.update(ref, {
+      memberUids: [...group.memberUids, user.uid],
+      members: [
+        ...group.members,
+        { uid: user.uid, username: user.username, displayName: user.displayName ?? null },
+      ],
+    });
+  });
 }
 
 export async function sendWordToGroup(params: {

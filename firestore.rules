@@ -64,8 +64,13 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
-      allow read: if request.auth != null
-        && resource.data.ownerUid == request.auth.uid;
+      // Any authenticated user can get a single group doc (needed for join flow).
+      allow get: if request.auth != null;
+
+      // List is restricted to owners and members.
+      allow list: if request.auth != null
+        && (resource.data.ownerUid == request.auth.uid
+            || resource.data.memberUids.hasAny([request.auth.uid]));
 
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
@@ -73,12 +78,40 @@ service cloud.firestore {
         && request.resource.data.memberUids.size() <= 25;
 
       allow update: if request.auth != null
-        && resource.data.ownerUid == request.auth.uid
-        && request.resource.data.ownerUid == resource.data.ownerUid
-        && request.resource.data.memberUids.size() <= 25;
+        && (
+          // Owner can update group details and members.
+          (resource.data.ownerUid == request.auth.uid
+           && request.resource.data.ownerUid == resource.data.ownerUid
+           && request.resource.data.memberUids.size() <= 25)
+          ||
+          // Non-owner self-join: can only add their own uid.
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids', 'members'])
+           && request.resource.data.memberUids.hasAll(resource.data.memberUids)
+           && request.resource.data.memberUids.size() == resource.data.memberUids.size() + 1
+           && request.resource.data.memberUids.hasAll([request.auth.uid])
+           && !resource.data.memberUids.hasAll([request.auth.uid])
+           && request.resource.data.memberUids.size() <= 25)
+        );
 
       allow delete: if request.auth != null
         && resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /joinCodes/{code} {
+      // Any authenticated user can look up a code to join a group.
+      allow get: if request.auth != null;
+      allow list: if false;
+
+      allow create: if request.auth != null
+        && request.resource.data.groupId is string
+        && request.resource.data.groupName is string
+        && request.resource.data.ownerUid == request.auth.uid;
+
+      // Owner can delete when deleting the group.
+      allow delete: if request.auth != null
+        && resource.data.ownerUid == request.auth.uid;
+
+      allow update: if false;
     }
   }
 }
