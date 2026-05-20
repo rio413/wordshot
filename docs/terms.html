@@ -5,42 +5,176 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Terms of Service – Wordshot</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 680px; margin: 60px auto; padding: 0 24px 80px; color: #1a1a1a; line-height: 1.7; }
-    h1 { font-size: 2rem; margin-bottom: 0.25em; }
-    h2 { font-size: 1.125rem; margin-top: 2em; }
-    p, li { font-size: 0.9375rem; color: #333; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 24px 100px;
+      color: #1a1a1a;
+      line-height: 1.75;
+      background: #fff;
+    }
+    .lang-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+    .lang-btn {
+      padding: 6px 18px;
+      border: 2px solid #1a1a1a;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .lang-btn.active {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .content { display: none; }
+    .content.active { display: block; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.2em; }
+    h2 { font-size: 1.1rem; font-weight: 700; margin-top: 2.25em; margin-bottom: 0.4em; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.3em; }
+    p, li { font-size: 0.9375rem; color: #333; margin-top: 0.5em; }
+    ul { padding-left: 1.5em; }
     a { color: #00704A; }
-    .updated { color: #888; font-size: 0.875rem; margin-top: 0.25em; }
+    .meta { color: #888; font-size: 0.85rem; margin-top: 0.25em; margin-bottom: 2em; }
   </style>
 </head>
 <body>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">English</button>
+  <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+</div>
+
+<!-- ===== ENGLISH ===== -->
+<div id="en" class="content active">
   <h1>Terms of Service</h1>
-  <p class="updated">Last updated: <!-- DATE --></p>
+  <p class="meta">Last updated: May 20, 2026</p>
 
-  <p>By downloading or using Wordshot, you agree to be bound by these Terms of Service. Please read them carefully.</p>
+  <p>These Terms of Service ("Terms") govern your use of the Wordshot mobile application ("the App") operated by Ryoma Inoue ("we", "us", or "our"). By downloading or using the App, you agree to be bound by these Terms. If you do not agree, do not use the App.</p>
 
-  <h2>Use of the App</h2>
-  <p>You may use Wordshot only for lawful purposes. You agree not to use the app to send harmful, abusive, or illegal content.</p>
+  <h2>1. Eligibility</h2>
+  <p>You must be at least 13 years old to use the App. By using the App, you represent that you meet this requirement. If you are under the age of majority in your jurisdiction, you must have your parent or legal guardian's consent.</p>
 
-  <h2>Accounts</h2>
-  <p>You are responsible for maintaining the confidentiality of your account credentials. You are responsible for all activity that occurs under your account.</p>
+  <h2>2. Account Registration</h2>
+  <p>You may register using Apple Sign-In or an email address and password. You are responsible for maintaining the confidentiality of your account credentials and for all activity that occurs under your account. Notify us immediately if you suspect unauthorized access to your account.</p>
 
-  <h2>User Content</h2>
-  <p><!-- TODO: describe ownership of words/notes sent through the app --></p>
+  <h2>3. Acceptable Use</h2>
+  <p>You agree not to use the App to:</p>
+  <ul>
+    <li>Send content that is unlawful, harmful, abusive, threatening, defamatory, obscene, or invasive of another's privacy.</li>
+    <li>Harass, bully, or intimidate other users.</li>
+    <li>Impersonate another person or entity.</li>
+    <li>Distribute spam or unsolicited messages.</li>
+    <li>Attempt to gain unauthorized access to any part of the App or its infrastructure.</li>
+    <li>Reverse-engineer, decompile, or disassemble the App.</li>
+    <li>Use the App in any way that violates applicable laws or regulations.</li>
+  </ul>
 
-  <h2>Termination</h2>
-  <p>We reserve the right to suspend or terminate accounts that violate these terms.</p>
+  <h2>4. User Content</h2>
+  <p>You retain ownership of the words, notes, and other content you create and send through the App ("User Content"). By submitting User Content, you grant us a limited, non-exclusive, royalty-free license to store and transmit that content solely as necessary to operate the App and deliver it to your chosen recipients. We do not use your User Content for advertising or sell it to third parties.</p>
 
-  <h2>Disclaimer of Warranties</h2>
-  <p>Wordshot is provided "as is" without warranty of any kind. We do not guarantee that the service will be uninterrupted or error-free.</p>
+  <h2>5. Intellectual Property</h2>
+  <p>All rights, title, and interest in and to the App—including its design, code, graphics, and trademarks—belong to us. Nothing in these Terms grants you any right to use our intellectual property other than to use the App as permitted herein.</p>
 
-  <h2>Limitation of Liability</h2>
-  <p><!-- TODO: standard limitation of liability clause --></p>
+  <h2>6. In-App Purchases and Subscriptions</h2>
+  <p>The App may offer in-app purchases or subscription plans processed through Apple's App Store. All purchases are subject to Apple's payment terms. We do not collect or store your payment information. Subscriptions automatically renew unless cancelled at least 24 hours before the renewal date through your App Store account settings. Refunds are governed by Apple's refund policy.</p>
 
-  <h2>Changes to Terms</h2>
-  <p>We may update these terms from time to time. Continued use of the app after changes constitutes acceptance of the new terms.</p>
+  <h2>7. Advertising</h2>
+  <p>The free tier of the App displays advertisements served by Google AdMob. We are not responsible for the content of those advertisements. You may remove ads by upgrading to a paid plan where available.</p>
 
-  <h2>Contact</h2>
-  <p>Questions? Contact us at <!-- EMAIL -->.</p>
+  <h2>8. Termination</h2>
+  <p>We may suspend or terminate your account at any time, with or without notice, if you violate these Terms or if we discontinue the App. You may delete your account at any time from the Profile screen. Upon termination, your right to use the App ceases immediately.</p>
+
+  <h2>9. Disclaimer of Warranties</h2>
+  <p>The App is provided "as is" and "as available" without warranties of any kind, either express or implied, including but not limited to implied warranties of merchantability, fitness for a particular purpose, or non-infringement. We do not warrant that the App will be uninterrupted, error-free, or free of viruses.</p>
+
+  <h2>10. Limitation of Liability</h2>
+  <p>To the fullest extent permitted by applicable law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages—including loss of data, loss of profits, or interruption of business—arising out of or related to your use of or inability to use the App, even if we have been advised of the possibility of such damages. Our total aggregate liability to you shall not exceed the amount you paid us in the 12 months preceding the claim, or JPY 1,000, whichever is greater.</p>
+
+  <h2>11. Governing Law</h2>
+  <p>These Terms are governed by the laws of Japan, without regard to its conflict of law provisions. Any disputes shall be resolved exclusively in the courts located in Tokyo, Japan.</p>
+
+  <h2>12. Changes to These Terms</h2>
+  <p>We may update these Terms from time to time. When we make material changes, we will update the "Last updated" date. Continued use of the App after changes constitutes acceptance of the new Terms.</p>
+
+  <h2>13. Contact Us</h2>
+  <p>Questions about these Terms? Contact us at:<br>
+  <a href="mailto:ryoma.inoue92@gmail.com">ryoma.inoue92@gmail.com</a></p>
+</div>
+
+<!-- ===== JAPANESE ===== -->
+<div id="ja" class="content">
+  <h1>利用規約</h1>
+  <p class="meta">最終更新日：2026年5月20日</p>
+
+  <p>本利用規約（以下「本規約」）は、Ryoma Inoue（以下「当社」）が運営する Wordshot モバイルアプリ（以下「本アプリ」）のご利用を規定するものです。本アプリをダウンロードまたは使用することで、本規約に同意したものとみなします。同意いただけない場合は、本アプリをご利用いただけません。</p>
+
+  <h2>1. 利用資格</h2>
+  <p>本アプリをご利用いただくには、13歳以上であることが必要です。本アプリを利用することで、この要件を満たすことを表明するものとします。お住まいの地域で成年に達していない場合は、保護者または法定後見人の同意が必要です。</p>
+
+  <h2>2. アカウント登録</h2>
+  <p>Apple サインインまたはメールアドレスとパスワードで登録できます。アカウント認証情報の機密保持、およびアカウントで発生するすべての活動についてお客様が責任を負います。不正アクセスが疑われる場合は、直ちに当社にご連絡ください。</p>
+
+  <h2>3. 禁止事項</h2>
+  <p>以下の目的に本アプリを使用することを禁止します：</p>
+  <ul>
+    <li>違法、有害、虐待的、脅迫的、名誉毀損的、わいせつ、またはプライバシーを侵害するコンテンツの送信。</li>
+    <li>他のユーザーへのハラスメント、いじめ、または脅迫。</li>
+    <li>他の人物または組織へのなりすまし。</li>
+    <li>スパムまたは迷惑メッセージの配信。</li>
+    <li>本アプリまたはそのインフラへの不正アクセスの試み。</li>
+    <li>本アプリのリバースエンジニアリング、逆コンパイル、または逆アセンブル。</li>
+    <li>適用される法律または規制に違反する方法での本アプリの使用。</li>
+  </ul>
+
+  <h2>4. ユーザーコンテンツ</h2>
+  <p>お客様が作成・送信するワード、メモ、その他のコンテンツ（以下「ユーザーコンテンツ」）の所有権はお客様に帰属します。ユーザーコンテンツを送信することで、本アプリの運営および選択した受信者への配信に必要な範囲に限り、限定的・非独占的・無償のライセンスを当社に付与するものとします。当社はユーザーコンテンツを広告目的に使用したり、第三者に販売したりしません。</p>
+
+  <h2>5. 知的財産権</h2>
+  <p>本アプリのデザイン、コード、グラフィック、商標を含む一切の権利、タイトル、および利益は当社に帰属します。本規約のいかなる内容も、本規約で許可された本アプリの使用以外に当社の知的財産を使用する権利を付与するものではありません。</p>
+
+  <h2>6. アプリ内購入・サブスクリプション</h2>
+  <p>本アプリは Apple App Store を通じて処理されるアプリ内購入またはサブスクリプションプランを提供する場合があります。すべての購入は Apple の支払い条件に従います。当社はお客様の支払い情報を収集・保存しません。サブスクリプションは、App Store アカウント設定で更新日の24時間前までにキャンセルしない限り自動更新されます。返金は Apple の返金ポリシーに従います。</p>
+
+  <h2>7. 広告</h2>
+  <p>無料プランでは Google AdMob が配信する広告が表示されます。これらの広告コンテンツについて当社は責任を負いません。有料プランにアップグレードすることで広告を非表示にできる場合があります。</p>
+
+  <h2>8. 利用停止・終了</h2>
+  <p>お客様が本規約に違反した場合、または当社が本アプリを終了する場合、当社は通知の有無にかかわらず、いつでもお客様のアカウントを停止または終了することができます。お客様はプロフィール画面からいつでもアカウントを削除できます。終了後、本アプリの使用権は直ちに消滅します。</p>
+
+  <h2>9. 保証の免責</h2>
+  <p>本アプリは、商品性、特定目的への適合性、非侵害性の黙示保証を含むがこれに限らず、明示または黙示を問わず、いかなる種類の保証もなく「現状のまま」および「利用可能な状態」で提供されます。当社は本アプリが中断なく、エラーなく、またはウイルスなく動作することを保証しません。</p>
+
+  <h2>10. 責任の制限</h2>
+  <p>適用法の最大限の範囲で、当社はそのような損害の可能性について通知を受けていた場合でも、本アプリの使用または使用不能から生じるデータの損失、利益の損失、または業務の中断を含む間接的、偶発的、特別、結果的、または懲罰的損害について責任を負いません。当社の総責任は、請求に先立つ12ヶ月間にお客様が当社に支払った金額または1,000円のいずれか大きい方を超えないものとします。</p>
+
+  <h2>11. 準拠法</h2>
+  <p>本規約は、法の抵触に関する規定にかかわらず、日本法に準拠します。紛争はいずれも東京都内の裁判所にて解決するものとします。</p>
+
+  <h2>12. 規約の変更</h2>
+  <p>本規約は随時更新することがあります。重要な変更を行う場合は、「最終更新日」を更新します。変更後に本アプリを継続してご利用いただいた場合、新しい規約に同意したものとみなします。</p>
+
+  <h2>13. お問い合わせ</h2>
+  <p>本規約に関するご質問は、以下にご連絡ください：<br>
+  <a href="mailto:ryoma.inoue92@gmail.com">ryoma.inoue92@gmail.com</a></p>
+</div>
+
+<script>
+  function setLang(lang) {
+    document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(lang).classList.add('active');
+    document.querySelector('[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+    document.documentElement.lang = lang;
+  }
+  if (navigator.language && navigator.language.startsWith('ja')) setLang('ja');
+</script>
+
 </body>
 </html>

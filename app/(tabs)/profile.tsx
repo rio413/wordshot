@@ -12,8 +12,8 @@ import { useAuth } from '@/lib/auth';
 import { subscribeToBank } from '@/lib/db';
 import { palette, space } from '@/constants/theme';
 
-const PRIVACY_URL = 'https://rio413.github.io/wordshot/privacy';
-const TERMS_URL = 'https://rio413.github.io/wordshot/terms';
+const PRIVACY_URL = 'https://rio413.github.io/wordshot/privacy.html';
+const TERMS_URL = 'https://rio413.github.io/wordshot/terms.html';
 
 const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 

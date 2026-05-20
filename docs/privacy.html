@@ -5,39 +5,183 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Privacy Policy – Wordshot</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 680px; margin: 60px auto; padding: 0 24px 80px; color: #1a1a1a; line-height: 1.7; }
-    h1 { font-size: 2rem; margin-bottom: 0.25em; }
-    h2 { font-size: 1.125rem; margin-top: 2em; }
-    p, li { font-size: 0.9375rem; color: #333; }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 24px 100px;
+      color: #1a1a1a;
+      line-height: 1.75;
+      background: #fff;
+    }
+    .lang-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+    .lang-btn {
+      padding: 6px 18px;
+      border: 2px solid #1a1a1a;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .lang-btn.active {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .content { display: none; }
+    .content.active { display: block; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.2em; }
+    h2 { font-size: 1.1rem; font-weight: 700; margin-top: 2.25em; margin-bottom: 0.4em; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.3em; }
+    p, li { font-size: 0.9375rem; color: #333; margin-top: 0.5em; }
+    ul { padding-left: 1.5em; }
     a { color: #00704A; }
-    .updated { color: #888; font-size: 0.875rem; margin-top: 0.25em; }
+    .meta { color: #888; font-size: 0.85rem; margin-top: 0.25em; margin-bottom: 2em; }
   </style>
 </head>
 <body>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">English</button>
+  <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+</div>
+
+<!-- ===== ENGLISH ===== -->
+<div id="en" class="content active">
   <h1>Privacy Policy</h1>
-  <p class="updated">Last updated: <!-- DATE --></p>
+  <p class="meta">Last updated: May 20, 2026</p>
 
-  <p>Wordshot ("we", "our", or "us") operates the Wordshot mobile application. This page informs you of our policies regarding the collection, use, and disclosure of personal data when you use our app.</p>
+  <p>Wordshot ("we", "our", or "us") is operated by Ryoma Inoue. This Privacy Policy explains how we collect, use, and protect your personal information when you use the Wordshot mobile application ("the App"). By using the App, you agree to the practices described here.</p>
 
-  <h2>Information We Collect</h2>
-  <p><!-- TODO: describe data collected (email, username, words sent/received, push tokens) --></p>
+  <h2>1. Information We Collect</h2>
+  <p>We collect only what is necessary to provide the service:</p>
+  <ul>
+    <li><strong>Account information:</strong> email address and display name, collected when you register via Apple Sign-In or email/password.</li>
+    <li><strong>Profile photo:</strong> an image you optionally upload to identify yourself to friends.</li>
+    <li><strong>Content you create:</strong> words and notes you compose and send through the App, stored in Firestore.</li>
+    <li><strong>Push notification token:</strong> a device token used to deliver notifications from friends. This token is not used for advertising.</li>
+    <li><strong>Usage and analytics data:</strong> anonymized crash reports and feature-usage events collected via Firebase Analytics to help us improve the App.</li>
+    <li><strong>Advertising data:</strong> if you use a free tier of the App, Google AdMob may collect your device advertising identifier (IDFA on iOS) and usage signals to serve contextual or personalized ads, subject to your device's ad-tracking permission. See <a href="https://policies.google.com/privacy" target="_blank">Google's Privacy Policy</a> for details.</li>
+  </ul>
 
-  <h2>How We Use Your Information</h2>
-  <p><!-- TODO: describe usage (deliver words, notifications, analytics) --></p>
+  <h2>2. How We Use Your Information</h2>
+  <ul>
+    <li>To create and manage your account.</li>
+    <li>To deliver words and notes to the recipients you choose.</li>
+    <li>To send you push notifications from friends and the App.</li>
+    <li>To analyze usage patterns and fix bugs (anonymized).</li>
+    <li>To display advertisements on the free tier of the App.</li>
+  </ul>
 
-  <h2>Data Storage</h2>
-  <p>Your data is stored securely using Google Firebase (Firestore and Firebase Authentication). Firebase's privacy practices are described at <a href="https://firebase.google.com/support/privacy">firebase.google.com/support/privacy</a>.</p>
+  <h2>3. Data Storage and Security</h2>
+  <p>Your data is stored in Google Firebase (Firestore, Firebase Authentication, and Firebase Storage), hosted in Google's secure cloud infrastructure. We apply Firestore Security Rules so that only you and your authorized friends can access your content. Firebase's privacy practices are described at <a href="https://firebase.google.com/support/privacy" target="_blank">firebase.google.com/support/privacy</a>.</p>
+  <p>We retain your data for as long as your account is active. After account deletion, data is purged within 30 days, except where required by law.</p>
 
-  <h2>Data Sharing</h2>
-  <p>We do not sell your personal information. Words and notes you send are visible only to the intended recipient(s).</p>
+  <h2>4. Data Sharing</h2>
+  <p>We do not sell, rent, or trade your personal information. We share data only with:</p>
+  <ul>
+    <li><strong>Google Firebase</strong> – for backend infrastructure (authentication, database, storage, analytics).</li>
+    <li><strong>Google AdMob</strong> – for advertising on the free tier, in accordance with Google's privacy policy.</li>
+    <li><strong>Apple</strong> – when you use Apple Sign-In, subject to Apple's privacy policy.</li>
+    <li><strong>Law enforcement</strong> – if required by applicable law or a valid legal process.</li>
+  </ul>
+  <p>Words and notes you send are visible only to the recipient(s) you select.</p>
 
-  <h2>Account Deletion</h2>
-  <p>You can permanently delete your account and all associated data at any time from the Profile screen inside the app. Deletion is irreversible.</p>
+  <h2>5. Your Choices and Rights</h2>
+  <ul>
+    <li><strong>Account deletion:</strong> you can permanently delete your account and all associated data from the Profile screen inside the App. Deletion is irreversible.</li>
+    <li><strong>Ad tracking:</strong> you can limit ad tracking in iOS Settings → Privacy & Security → Tracking.</li>
+    <li><strong>Notifications:</strong> you can disable push notifications in iOS Settings at any time.</li>
+    <li><strong>Data access or correction:</strong> contact us at the email below and we will respond within 30 days.</li>
+  </ul>
 
-  <h2>Children's Privacy</h2>
-  <p>Wordshot is not directed to children under 13. We do not knowingly collect personal information from children under 13.</p>
+  <h2>6. Children's Privacy</h2>
+  <p>Wordshot is not directed to children under the age of 13. We do not knowingly collect personal information from anyone under 13. If we learn that we have inadvertently collected such data, we will delete it promptly.</p>
 
-  <h2>Contact Us</h2>
-  <p>If you have questions about this policy, contact us at <!-- EMAIL -->.</p>
+  <h2>7. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. When we make material changes, we will update the "Last updated" date at the top of this page. Continued use of the App after changes constitutes acceptance of the updated policy.</p>
+
+  <h2>8. Contact Us</h2>
+  <p>If you have questions or requests about this Privacy Policy, please contact us at:<br>
+  <a href="mailto:ryoma.inoue92@gmail.com">ryoma.inoue92@gmail.com</a></p>
+</div>
+
+<!-- ===== JAPANESE ===== -->
+<div id="ja" class="content">
+  <h1>プライバシーポリシー</h1>
+  <p class="meta">最終更新日：2026年5月20日</p>
+
+  <p>Wordshot（以下「本アプリ」または「当社」）は、Ryoma Inoueが運営しています。本プライバシーポリシーは、Wordshot モバイルアプリ（以下「本アプリ」）をご利用いただく際に、当社がどのような個人情報を収集・利用・保護するかを説明するものです。本アプリを利用することで、以下の方針に同意いただいたものとみなします。</p>
+
+  <h2>1. 収集する情報</h2>
+  <p>当社はサービス提供に必要な情報のみを収集します：</p>
+  <ul>
+    <li><strong>アカウント情報：</strong>Apple サインインまたはメール/パスワードで登録する際に収集するメールアドレスと表示名。</li>
+    <li><strong>プロフィール写真：</strong>友達に自分を示すために任意でアップロードする画像。</li>
+    <li><strong>作成したコンテンツ：</strong>本アプリを通じて作成・送信するワードやメモ（Firestore に保存）。</li>
+    <li><strong>プッシュ通知トークン：</strong>友達からの通知を配信するために使用するデバイストークン。広告目的には使用しません。</li>
+    <li><strong>利用状況・分析データ：</strong>アプリ改善のために Firebase Analytics を通じて収集する匿名化されたクラッシュレポートおよび機能利用イベント。</li>
+    <li><strong>広告データ：</strong>無料プランをご利用の場合、Google AdMob がデバイスの広告識別子（iOS では IDFA）および利用シグナルを収集し、コンテキスト広告またはパーソナライズド広告を配信することがあります。これはお使いのデバイスの広告トラッキング設定の対象となります。詳細は<a href="https://policies.google.com/privacy" target="_blank">Google のプライバシーポリシー</a>をご参照ください。</li>
+  </ul>
+
+  <h2>2. 情報の利用目的</h2>
+  <ul>
+    <li>アカウントの作成および管理。</li>
+    <li>選択した相手へのワードやメモの配信。</li>
+    <li>友達やアプリからのプッシュ通知の送信。</li>
+    <li>利用パターンの分析とバグ修正（匿名化）。</li>
+    <li>無料プランにおける広告の表示。</li>
+  </ul>
+
+  <h2>3. データの保存とセキュリティ</h2>
+  <p>お客様のデータは、Google のセキュアなクラウドインフラ上でホストされる Google Firebase（Firestore、Firebase Authentication、Firebase Storage）に保存されます。Firestore セキュリティルールを適用し、あなたと承認された友達のみがコンテンツにアクセスできるようにしています。Firebase のプライバシーに関する詳細は <a href="https://firebase.google.com/support/privacy" target="_blank">firebase.google.com/support/privacy</a> をご覧ください。</p>
+  <p>データはアカウントが有効な期間中保持されます。アカウント削除後、法令で義務付けられる場合を除き、30日以内にデータを削除します。</p>
+
+  <h2>4. データの共有</h2>
+  <p>当社はお客様の個人情報を販売・貸与・譲渡しません。データを共有する相手は以下のみです：</p>
+  <ul>
+    <li><strong>Google Firebase</strong> – バックエンドインフラ（認証、データベース、ストレージ、分析）のため。</li>
+    <li><strong>Google AdMob</strong> – 無料プランにおける広告配信のため（Google のプライバシーポリシーに従う）。</li>
+    <li><strong>Apple</strong> – Apple サインインをご利用の場合（Apple のプライバシーポリシーに従う）。</li>
+    <li><strong>法執行機関</strong> – 適用法令または正当な法的手続きにより必要とされる場合。</li>
+  </ul>
+  <p>送信したワードやメモは、選択した受信者のみが閲覧できます。</p>
+
+  <h2>5. お客様の選択と権利</h2>
+  <ul>
+    <li><strong>アカウント削除：</strong>本アプリのプロフィール画面からアカウントとすべての関連データを完全に削除できます。削除は取り消せません。</li>
+    <li><strong>広告トラッキング：</strong>iOS 設定 → プライバシーとセキュリティ → トラッキング から広告トラッキングを制限できます。</li>
+    <li><strong>通知：</strong>iOS 設定からプッシュ通知をいつでも無効にできます。</li>
+    <li><strong>データへのアクセス・修正：</strong>以下のメールアドレスにご連絡いただければ、30日以内に対応します。</li>
+  </ul>
+
+  <h2>6. 子どものプライバシー</h2>
+  <p>本アプリは13歳未満の方を対象としていません。13歳未満の方から意図せず個人情報を収集していることが判明した場合は、速やかに削除します。</p>
+
+  <h2>7. ポリシーの変更</h2>
+  <p>本プライバシーポリシーは随時更新することがあります。重要な変更を行う場合は、このページ上部の「最終更新日」を更新します。変更後に本アプリを継続してご利用いただいた場合、更新後のポリシーに同意したものとみなします。</p>
+
+  <h2>8. お問い合わせ</h2>
+  <p>本プライバシーポリシーに関するご質問やご要望は、以下にご連絡ください：<br>
+  <a href="mailto:ryoma.inoue92@gmail.com">ryoma.inoue92@gmail.com</a></p>
+</div>
+
+<script>
+  function setLang(lang) {
+    document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(lang).classList.add('active');
+    document.querySelector('[onclick="setLang(\'' + lang + '\')"]').classList.add('active');
+    document.documentElement.lang = lang;
+  }
+  // Auto-select based on browser language
+  if (navigator.language && navigator.language.startsWith('ja')) setLang('ja');
+</script>
+
 </body>
 </html>
