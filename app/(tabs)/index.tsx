@@ -237,6 +237,10 @@ export default function SendScreen() {
                       label="+ Add by username"
                       onPress={() => setShowUsernamePicker(true)}
                     />
+                    <Chip
+                      label="+ New Group"
+                      onPress={() => router.push('/groups/new')}
+                    />
                   </ChipRow>
                 )}
               </View>
