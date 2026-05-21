@@ -158,7 +158,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Danger zone */}
-        <View style={[styles.section, { gap: space.s2 }]}>
+        <View style={styles.dangerZone}>
           <PillButton label="Sign out" variant="darkOutlined" onPress={onSignOut} fullWidth />
           <PillButton
             label="Delete account"
@@ -386,6 +386,11 @@ const styles = StyleSheet.create({
   navLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: space.s2,
+  },
+  dangerZone: {
+    marginHorizontal: space.s3,
+    marginTop: space.s4,
     gap: space.s2,
   },
   version: {
