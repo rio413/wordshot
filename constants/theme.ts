@@ -79,7 +79,7 @@ export const gutter = {
 export const radii = {
   card: 12,
   pill: 999, // full-pill on RN — DESIGN.md spec is 50px, but 999 ensures full pill at any height
-  field: 4,
+  field: 12,
   circle: 9999,
 } as const;
 
