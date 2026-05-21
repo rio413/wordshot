@@ -84,16 +84,20 @@ export async function decideCard(cardId: string, status: 'saved' | 'discarded') 
   }
 
   const ref = collections.cards().doc(cardId);
+  console.log('[decideCard] step1: reading card', cardId);
   const snap = await ref.get();
   if (!snap.exists()) throw new Error('Card not found');
   const card = snap.data() as WordCard;
+  console.log('[decideCard] step2: updating card status →', status, 'toUid:', card.toUid);
   const updates = { status, decidedAt: Date.now() };
   await ref.update(updates);
   if (status === 'saved') {
+    console.log('[decideCard] step3: writing savedWords for uid', card.toUid);
     await collections
       .savedWords(card.toUid)
       .doc(cardId)
       .set({ ...card, ...updates });
+    console.log('[decideCard] done');
   }
 }
 

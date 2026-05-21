@@ -101,7 +101,7 @@ function RoutingShell() {
       }}
     >
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Profile' }} />
       <Stack.Screen
         name="card/[id]"
         options={{ presentation: 'modal', headerShown: false }}
