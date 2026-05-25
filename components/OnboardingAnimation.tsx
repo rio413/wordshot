@@ -15,6 +15,7 @@ import { PillButton } from './PillButton';
 const FRAME_H = 520;
 const FRAME_W = 300;
 const WORD = 'astringent';
+const JP_MEANING = '渋い・収れん性のある';
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -28,6 +29,7 @@ type Props = {
 export function OnboardingAnimation({ visible, onDone }: Props) {
   const [step, setStep] = useState<Step>(0);
   const [typedWord, setTypedWord] = useState('');
+  const [typedMeaning, setTypedMeaning] = useState('');
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Step 0 — word intro
@@ -91,20 +93,30 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   const runStep1 = () => {
     setStep(1);
     setTypedWord('');
-    mockSlideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-    // Type each character after slide completes (~700ms), one every 130ms
+    setTypedMeaning('');
+    mockSlideY.value = withTiming(0, { duration: 700, easing: Easing.out(Easing.cubic) });
+
+    // English: starts 800ms in (after slide settles), 130ms per char
     WORD.split('').forEach((_, i) => {
-      after(700 + i * 130, () => setTypedWord(WORD.slice(0, i + 1)));
+      after(800 + i * 130, () => setTypedWord(WORD.slice(0, i + 1)));
     });
-    after(2400, runStep2);
+
+    // Japanese: starts 350ms after English finishes
+    const jpStart = 800 + (WORD.length - 1) * 130 + 350;
+    JP_MEANING.split('').forEach((_, i) => {
+      after(jpStart + i * 110, () => setTypedMeaning(JP_MEANING.slice(0, i + 1)));
+    });
+
+    after(4800, runStep2);
   };
 
   const runStep2 = () => {
-    setTypedWord(WORD); // finalise if Next was tapped before typing finished
+    setTypedWord(WORD);
+    setTypedMeaning(JP_MEANING); // finalise if Next was tapped before typing finished
     setStep(2);
     chipOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
     chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
-    after(2400, runStep3);
+    after(3200, runStep3);
   };
 
   const runStep3 = () => {
@@ -120,14 +132,14 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
       420,
       withTiming(0, { duration: 420, easing: Easing.out(Easing.back(1.6)) }),
     );
-    after(2800, onDone);
+    after(3500, onDone);
   };
 
   const runSequence = () => {
     setStep(0);
     wordOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
     wordScale.value   = withSpring(1, { damping: 13, stiffness: 180 });
-    after(2800, runStep1);
+    after(3500, runStep1);
   };
 
   const onNext = () => {
@@ -144,6 +156,7 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
     if (!visible) {
       cancelAll();
       setTypedWord('');
+      setTypedMeaning('');
       wordOpacity.value    = 0;
       wordScale.value      = 0.75;
       mockSlideY.value     = FRAME_H;
@@ -240,7 +253,7 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               </Text>
               {typedWord.length === WORD.length && (
                 <Text variant="small" color={palette.textBlackSoft} style={{ marginTop: space.s1 }}>
-                  渋い・収れん性のある
+                  {typedMeaning}{typedMeaning.length < JP_MEANING.length ? '|' : ''}
                 </Text>
               )}
             </Animated.View>
