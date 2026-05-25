@@ -172,6 +172,9 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               <Text variant="h2" align="center">
                 astringent
               </Text>
+              <Text variant="body" align="center" style={{ marginTop: space.s1 }}>
+                渋い・収れん性のある
+              </Text>
               <Text
                 variant="uppercaseLabel"
                 color={palette.textBlackSoft}
@@ -225,6 +228,9 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               </Text>
               <Text variant="h2" style={{ marginTop: space.s1 }}>
                 astringent
+              </Text>
+              <Text variant="small" color={palette.textBlackSoft} style={{ marginTop: space.s1 }}>
+                渋い・収れん性のある
               </Text>
             </Animated.View>
 
