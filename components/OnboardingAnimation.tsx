@@ -40,9 +40,9 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   const chipScale   = useSharedValue(0.5);
 
   // Step 3 — word card launches + confirm appears
-  const cardY     = useSharedValue(0);
-  const cardScale = useSharedValue(1);
-  const cardOpacity = useSharedValue(1);
+  const cardY      = useSharedValue(0);
+  const cardScale  = useSharedValue(1);
+  const cardOpacity   = useSharedValue(1);
   const confirmOpacity = useSharedValue(0);
   const confirmY       = useSharedValue(14);
 
@@ -84,45 +84,50 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
     timers.current = [];
   };
 
-  // ── Main sequence (fully automated) ───────────────────────────────────────
+  // ── Per-step runners (called by auto-sequence and by Next button) ──────────
+
+  const runStep1 = () => {
+    setStep(1);
+    mockSlideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
+    after(2400, runStep2);
+  };
+
+  const runStep2 = () => {
+    setStep(2);
+    chipOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
+    chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
+    after(2400, runStep3);
+  };
+
+  const runStep3 = () => {
+    setStep(3);
+    cardY.value       = withTiming(-FRAME_H * 1.2, { duration: 520, easing: Easing.in(Easing.ease) });
+    cardScale.value   = withTiming(0.45, { duration: 520, easing: Easing.in(Easing.ease) });
+    cardOpacity.value = withTiming(0, { duration: 520 });
+    confirmOpacity.value = withDelay(
+      420,
+      withTiming(1, { duration: 350, easing: Easing.out(Easing.ease) }),
+    );
+    confirmY.value = withDelay(
+      420,
+      withTiming(0, { duration: 420, easing: Easing.out(Easing.back(1.6)) }),
+    );
+    after(2800, onDone);
+  };
 
   const runSequence = () => {
-    // ── 0: Word pops in ──────────────────────────────────────────────────────
     setStep(0);
     wordOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
     wordScale.value   = withSpring(1, { damping: 13, stiffness: 180 });
+    after(2800, runStep1);
+  };
 
-    after(2800, () => {
-      // ── 1: Mock app slides up ─────────────────────────────────────────────
-      setStep(1);
-      mockSlideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
-
-      after(2400, () => {
-        // ── 2: Recipient chip snaps in ────────────────────────────────────────
-        setStep(2);
-        chipOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
-        chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
-
-        after(2400, () => {
-          // ── 3: Word card launches, confirm appears ─────────────────────────
-          setStep(3);
-          cardY.value       = withTiming(-FRAME_H * 1.2, { duration: 520, easing: Easing.in(Easing.ease) });
-          cardScale.value   = withTiming(0.45, { duration: 520, easing: Easing.in(Easing.ease) });
-          cardOpacity.value = withTiming(0, { duration: 520 });
-
-          confirmOpacity.value = withDelay(
-            420,
-            withTiming(1, { duration: 350, easing: Easing.out(Easing.ease) }),
-          );
-          confirmY.value = withDelay(
-            420,
-            withTiming(0, { duration: 420, easing: Easing.out(Easing.back(1.6)) }),
-          );
-
-          after(2800, onDone);
-        });
-      });
-    });
+  const onNext = () => {
+    cancelAll();
+    if (step === 0) runStep1();
+    else if (step === 1) runStep2();
+    else if (step === 2) runStep3();
+    else onDone();
   };
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
@@ -130,7 +135,6 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   useEffect(() => {
     if (!visible) {
       cancelAll();
-      // Reset all values so the next showing starts clean
       wordOpacity.value    = 0;
       wordScale.value      = 0.75;
       mockSlideY.value     = FRAME_H;
@@ -166,7 +170,7 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
           <View style={styles.frameCenter}>
             <Animated.View style={[styles.wordCard, wordAnimStyle]}>
               <Text variant="h2" align="center">
-                ephemeral
+                astringent
               </Text>
               <Text
                 variant="uppercaseLabel"
@@ -200,14 +204,12 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               </Text>
 
               {step === 1 ? (
-                /* Placeholder chip before recipient is selected */
                 <View style={styles.chipPlaceholder}>
                   <Text variant="small" color={palette.textBlackSoft}>
                     Add a friend…
                   </Text>
                 </View>
               ) : (
-                /* Selected recipient chip */
                 <Animated.View style={[styles.chipSelected, chipAnimStyle]}>
                   <Text variant="smallStrong" color={palette.white}>
                     @rio
@@ -222,7 +224,7 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
                 Word
               </Text>
               <Text variant="h2" style={{ marginTop: space.s1 }}>
-                ephemeral
+                astringent
               </Text>
             </Animated.View>
 
@@ -251,12 +253,25 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
         ))}
       </View>
 
-      {/* Skip */}
-      <PillButton
-        label="Skip"
-        variant="darkOutlined"
-        onPress={() => { cancelAll(); onDone(); }}
-      />
+      {/* Skip + Next */}
+      <View style={styles.buttonRow}>
+        <View style={styles.buttonWrap}>
+          <PillButton
+            label="Skip"
+            variant="darkOutlined"
+            fullWidth
+            onPress={() => { cancelAll(); onDone(); }}
+          />
+        </View>
+        <View style={styles.buttonWrap}>
+          <PillButton
+            label={step === 3 ? 'Done' : 'Next'}
+            variant="primary"
+            fullWidth
+            onPress={onNext}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -397,4 +412,14 @@ const styles = StyleSheet.create({
   },
   dotActive: { backgroundColor: palette.greenAccent },
   dotIdle:   { backgroundColor: palette.ceramic },
+
+  // ── Bottom button row
+  buttonRow: {
+    flexDirection: 'row',
+    gap: space.s2,
+    width: FRAME_W,
+  },
+  buttonWrap: {
+    flex: 1,
+  },
 });
