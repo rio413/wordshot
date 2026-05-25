@@ -1,8 +1,8 @@
 /**
- * Send screen — the default tab. The single most important UI in the product.
+ * Share screen — the default tab. The single most important UI in the product.
  *
  * Goal: word leaves your phone in <10s.
- * Layout (Thumb-Zone): the input card and the Shoot button are anchored at the
+ * Layout (Thumb-Zone): the input card and the Share button are anchored at the
  * bottom of the viewport so the typing surface and the trigger sit directly under
  * the user's thumb. Recipient selection lives above and scrolls if it grows.
  */
@@ -118,7 +118,7 @@ export default function SendScreen() {
         setWord(wordSnap);
         setNote(noteSnap ?? '');
         setShowNote(!!noteSnap);
-        setSendError(e?.message ?? "Couldn't send — tap Shoot to try again.");
+        setSendError(e?.message ?? "Couldn't send — tap Share to try again.");
       })
       .finally(() => {
         setSending(false);
@@ -179,7 +179,7 @@ export default function SendScreen() {
             showsVerticalScrollIndicator={false}
           >
             <Text variant="h1" style={{ marginBottom: space.s4 }}>
-              Send a word
+              Share a word
             </Text>
 
             <View>
@@ -266,7 +266,7 @@ export default function SendScreen() {
             </View>
           </ScrollView>
 
-          {/* Bottom thumb zone: anchored input card + Shoot trigger */}
+          {/* Bottom thumb zone: anchored input card + Share trigger */}
           <View style={[styles.thumbZone, { paddingBottom: thumbZonePadBottom }]}>
             {sentTo ? (
               <View style={styles.sentBanner}>
@@ -323,7 +323,7 @@ export default function SendScreen() {
             </ShootableCard>
 
             <PillButton
-              label={sending ? 'Sending…' : 'Shoot'}
+              label={sending ? 'Sharing…' : 'Share'}
               onPress={onPressSend}
               loading={sending}
               fullWidth

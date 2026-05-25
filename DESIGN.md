@@ -591,8 +591,8 @@ The Send screen splits vertically into two regions:
 
 | Region | Position | Contents | Behavior |
 |--------|----------|----------|----------|
-| Recipient region | Top, scrolling | `H1 "Send a word"`, `Send to` label, recipient chips / selected handle, `Add by username` flow | Scrolls inside its own bounds if recipient list grows; never overlaps the action zone |
-| Primary Action Zone | Bottom, anchored | `ShootableCard` (word input + optional note) and the `Shoot` trigger button | Pinned to the bottom of the available viewport; rides the keyboard up via `KeyboardAvoidingView` |
+| Recipient region | Top, scrolling | `H1 "Share a word"`, `Send to` label, recipient chips / selected handle, `Add by username` flow | Scrolls inside its own bounds if recipient list grows; never overlaps the action zone |
+| Primary Action Zone | Bottom, anchored | `ShootableCard` (word input + optional note) and the `Share` trigger button | Pinned to the bottom of the available viewport; rides the keyboard up via `KeyboardAvoidingView` |
 
 **Why bottom-aligned.** On phones the lower third of the screen is the natural thumb arc when held one-handed. Anchoring the typing surface and the trigger there means the user never reaches across the device to type a word or to fire it, and it keeps the input flush above the software keyboard when it's open.
 
@@ -610,7 +610,7 @@ The base design system uses a 12px card radius and 50px full-pill buttons. The S
 | Element | Base spec | Send-screen override |
 |---------|-----------|----------------------|
 | Input card | `12px` radius, whisper-soft shadow | `0px` radius, `2px` solid black border, no shadow |
-| `Shoot` button | `50px` radius (full pill), Green Accent | `0px` radius, `2px` black border, `dark` variant (black fill / white text) |
+| `Share` button | `50px` radius (full pill), Green Accent | `0px` radius, `2px` black border, `dark` variant (black fill / white text) |
 | Recipient chip | `50px` pill, `1px` Green Accent border | `0px` radius, `2px` border, `6px × 12px` padding |
 | Selected recipient handle | Green Accent pill, `999px` radius | `0px` radius, `2px` black border, black fill, white text |
 | `Find friend` outlined button | `50px` pill | `0px` radius, `2px` border |
@@ -619,7 +619,7 @@ The override is local to the Send surface — Bank, Profile, and other tabs cont
 
 ### Bullet Trajectory — Bottom-to-Top Stop-Motion
 
-The `Send Word` card transforms into an angular projectile and shoots from its bottom-anchored resting position upward across the entire viewport. The animation is implemented in `components/ShootableCard.tsx` via `react-native-reanimated`.
+The `Share` card transforms into an angular projectile and shoots from its bottom-anchored resting position upward across the entire viewport. The animation is implemented in `components/ShootableCard.tsx` via `react-native-reanimated`.
 
 **Discrete frame model.** Every transition uses `withTiming(value, { duration: 0 })` chained with `withDelay(N)` inside a `withSequence(...)` — there is no easing and no interpolation between frames. The card visibly snaps from one pose to the next, producing a staccato "stop-motion" feel rather than a smooth glide. Total duration ≈ 400 ms.
 
