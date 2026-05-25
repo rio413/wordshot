@@ -7,11 +7,13 @@ import { PillButton } from '@/components/PillButton';
 import { FloatingLabelInput } from '@/components/FloatingLabelInput';
 import { useAuth } from '@/lib/auth';
 import { palette, space } from '@/constants/theme';
+import { OnboardingAnimation } from '@/components/OnboardingAnimation';
 
 type Mode = 'signin' | 'signup';
 
 export default function Login() {
   const { signInWithEmail, signUpWithEmail, signInWithApple, signInWithGoogle } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +61,10 @@ export default function Login() {
 
   return (
     <Screen tone="cream">
+      <OnboardingAnimation
+        visible={showOnboarding}
+        onDone={() => setShowOnboarding(false)}
+      />
       <KeyboardAvoidingView
         style={styles.fill}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
