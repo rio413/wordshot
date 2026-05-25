@@ -384,15 +384,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  // ── Confirmation pill (step 3) — centered in the mock app
+  // ── Confirmation pill (step 3) — above the word card, left-aligned (matches real sentBanner)
   confirmOuter: {
     position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    bottom: 128,
+    left: space.s3,
+    right: space.s3,
+    alignItems: 'flex-start',
   },
   confirmPill: {
     borderRadius: radii.pill,
