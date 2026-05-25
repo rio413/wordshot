@@ -11,6 +11,7 @@ import { FloatingLabelInput } from '@/components/FloatingLabelInput';
 import { useAuth } from '@/lib/auth';
 import { subscribeToBank } from '@/lib/db';
 import { palette, space } from '@/constants/theme';
+import { OnboardingAnimation } from '@/components/OnboardingAnimation';
 
 const PRIVACY_URL = 'https://rio413.github.io/wordshot/privacy.html';
 const TERMS_URL = 'https://rio413.github.io/wordshot/terms.html';
@@ -20,6 +21,7 @@ const appVersion = Constants.expoConfig?.version ?? '1.0.0';
 export default function ProfileScreen() {
   const { user, profile, isEmailUser, signOut, changePassword, deleteAccount } = useAuth();
   const [savedCount, setSavedCount] = useState(0);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Change password modal
   const [pwVisible, setPwVisible] = useState(false);
@@ -171,7 +173,25 @@ export default function ProfileScreen() {
         <Text variant="micro" color={palette.textBlackSoft} style={styles.version}>
           Word Share v{appVersion}
         </Text>
+
+        {__DEV__ && (
+          <Pressable
+            onPress={() => setShowOnboarding(true)}
+            style={styles.devButton}
+          >
+            <Text variant="micro" color={palette.textBlackSoft}>
+              DEV — Replay onboarding
+            </Text>
+          </Pressable>
+        )}
       </ScrollView>
+
+      {__DEV__ && (
+        <OnboardingAnimation
+          visible={showOnboarding}
+          onDone={() => setShowOnboarding(false)}
+        />
+      )}
 
       {/* Change password modal */}
       <Modal
@@ -396,6 +416,16 @@ const styles = StyleSheet.create({
   version: {
     textAlign: 'center',
     marginTop: space.s5,
+  },
+  devButton: {
+    alignSelf: 'center',
+    marginTop: space.s2,
+    marginBottom: space.s4,
+    paddingVertical: space.s1,
+    paddingHorizontal: space.s3,
+    borderWidth: 1,
+    borderColor: palette.ceramic,
+    borderRadius: 4,
   },
   overlay: {
     flex: 1,
