@@ -14,6 +14,7 @@ import { PillButton } from './PillButton';
 
 const FRAME_H = 520;
 const FRAME_W = 300;
+const WORD = 'astringent';
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -26,6 +27,7 @@ type Props = {
 
 export function OnboardingAnimation({ visible, onDone }: Props) {
   const [step, setStep] = useState<Step>(0);
+  const [typedWord, setTypedWord] = useState('');
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Step 0 — word intro
@@ -88,11 +90,17 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
 
   const runStep1 = () => {
     setStep(1);
+    setTypedWord('');
     mockSlideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
+    // Type each character after slide completes (~700ms), one every 130ms
+    WORD.split('').forEach((_, i) => {
+      after(700 + i * 130, () => setTypedWord(WORD.slice(0, i + 1)));
+    });
     after(2400, runStep2);
   };
 
   const runStep2 = () => {
+    setTypedWord(WORD); // finalise if Next was tapped before typing finished
     setStep(2);
     chipOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
     chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
@@ -135,6 +143,7 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   useEffect(() => {
     if (!visible) {
       cancelAll();
+      setTypedWord('');
       wordOpacity.value    = 0;
       wordScale.value      = 0.75;
       mockSlideY.value     = FRAME_H;
@@ -227,11 +236,13 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
                 Word
               </Text>
               <Text variant="h2" style={{ marginTop: space.s1 }}>
-                astringent
+                {typedWord}{typedWord.length < WORD.length ? '|' : ''}
               </Text>
-              <Text variant="small" color={palette.textBlackSoft} style={{ marginTop: space.s1 }}>
-                渋い・収れん性のある
-              </Text>
+              {typedWord.length === WORD.length && (
+                <Text variant="small" color={palette.textBlackSoft} style={{ marginTop: space.s1 }}>
+                  渋い・収れん性のある
+                </Text>
+              )}
             </Animated.View>
 
             {/* Step 3: "Shared!" confirmation pill */}
