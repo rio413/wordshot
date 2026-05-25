@@ -12,8 +12,8 @@ import { palette, radii, space } from '@/constants/theme';
 import { Text } from './Text';
 import { PillButton } from './PillButton';
 
-const FRAME_H = 460;
-const FRAME_W = 260;
+const FRAME_H = 520;
+const FRAME_W = 300;
 
 type Step = 0 | 1 | 2 | 3;
 
@@ -92,34 +92,34 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
     wordOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
     wordScale.value   = withSpring(1, { damping: 13, stiffness: 180 });
 
-    after(2000, () => {
+    after(2800, () => {
       // ── 1: Mock app slides up ─────────────────────────────────────────────
       setStep(1);
-      mockSlideY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+      mockSlideY.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.cubic) });
 
-      after(1600, () => {
+      after(2400, () => {
         // ── 2: Recipient chip snaps in ────────────────────────────────────────
         setStep(2);
-        chipOpacity.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.ease) });
+        chipOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
         chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
 
-        after(1600, () => {
+        after(2400, () => {
           // ── 3: Word card launches, confirm appears ─────────────────────────
           setStep(3);
-          cardY.value       = withTiming(-FRAME_H * 1.2, { duration: 460, easing: Easing.in(Easing.ease) });
-          cardScale.value   = withTiming(0.45, { duration: 460, easing: Easing.in(Easing.ease) });
-          cardOpacity.value = withTiming(0, { duration: 460 });
+          cardY.value       = withTiming(-FRAME_H * 1.2, { duration: 520, easing: Easing.in(Easing.ease) });
+          cardScale.value   = withTiming(0.45, { duration: 520, easing: Easing.in(Easing.ease) });
+          cardOpacity.value = withTiming(0, { duration: 520 });
 
           confirmOpacity.value = withDelay(
-            360,
-            withTiming(1, { duration: 320, easing: Easing.out(Easing.ease) }),
+            420,
+            withTiming(1, { duration: 350, easing: Easing.out(Easing.ease) }),
           );
           confirmY.value = withDelay(
-            360,
-            withTiming(0, { duration: 380, easing: Easing.out(Easing.back(1.6)) }),
+            420,
+            withTiming(0, { duration: 420, easing: Easing.out(Easing.back(1.6)) }),
           );
 
-          after(2000, onDone);
+          after(2800, onDone);
         });
       });
     });
@@ -363,13 +363,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  // ── Confirmation pill (step 3)
+  // ── Confirmation pill (step 3) — centered in the mock app
   confirmOuter: {
     position: 'absolute',
-    top: space.s5,
+    top: 0,
+    bottom: 0,
     left: 0,
     right: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   confirmPill: {
     borderRadius: radii.pill,
