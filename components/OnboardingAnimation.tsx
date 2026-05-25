@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
-  runOnJS,
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { palette, space } from '@/constants/theme';
+import { palette, radii, space } from '@/constants/theme';
 import { Text } from './Text';
 import { PillButton } from './PillButton';
 
@@ -17,6 +17,8 @@ const FRAME_W = 260;
 
 type Step = 0 | 1 | 2 | 3;
 
+const STEP_LABELS = ['Spot a word', 'Open Word Share', 'Pick a friend', 'Share it'];
+
 type Props = {
   visible: boolean;
   onDone: () => void;
@@ -24,24 +26,27 @@ type Props = {
 
 export function OnboardingAnimation({ visible, onDone }: Props) {
   const [step, setStep] = useState<Step>(0);
-  const [playing, setPlaying] = useState(false);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Step 0 — word intro
   const wordOpacity = useSharedValue(0);
-  const wordScale = useSharedValue(0.6);
+  const wordScale  = useSharedValue(0.75);
 
-  // Step 1 — mock app slide up
+  // Step 1 — mock app slides up
   const mockSlideY = useSharedValue(FRAME_H);
 
-  // Step 2 — chip snap + rattle
-  const chipScale = useSharedValue(0);
-  const chipX = useSharedValue(-40);
+  // Step 2 — recipient chip pops in
+  const chipOpacity = useSharedValue(0);
+  const chipScale   = useSharedValue(0.5);
 
-  // Step 3 — bullet trajectory
-  const bulletY = useSharedValue(0);
-  const bulletScaleX = useSharedValue(1);
-  const bulletScaleY = useSharedValue(1);
+  // Step 3 — word card launches + confirm appears
+  const cardY     = useSharedValue(0);
+  const cardScale = useSharedValue(1);
+  const cardOpacity = useSharedValue(1);
   const confirmOpacity = useSharedValue(0);
+  const confirmY       = useSharedValue(14);
+
+  // ── Animated styles ────────────────────────────────────────────────────────
 
   const wordAnimStyle = useAnimatedStyle(() => ({
     opacity: wordOpacity.value,
@@ -53,141 +58,114 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   }));
 
   const chipAnimStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scaleX: chipScale.value },
-      { scaleY: chipScale.value },
-      { translateX: chipX.value },
-    ],
+    opacity: chipOpacity.value,
+    transform: [{ scale: chipScale.value }],
   }));
 
-  const bulletAnimStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: bulletY.value },
-      { scaleX: bulletScaleX.value },
-      { scaleY: bulletScaleY.value },
-    ],
+  const cardAnimStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ translateY: cardY.value }, { scale: cardScale.value }],
   }));
 
   const confirmAnimStyle = useAnimatedStyle(() => ({
     opacity: confirmOpacity.value,
+    transform: [{ translateY: confirmY.value }],
   }));
 
-  const playStep = (s: Step) => {
-    setPlaying(true);
+  // ── Timer helpers ──────────────────────────────────────────────────────────
 
-    if (s === 0) {
-      wordOpacity.value = withSequence(
-        withTiming(0, { duration: 0 }),
-        withDelay(80, withTiming(1, { duration: 0 })),
-      );
-      wordScale.value = withSequence(
-        withTiming(0.6, { duration: 0 }),
-        withDelay(80, withTiming(1.0, { duration: 0 })),
-        withDelay(80, withTiming(1.0, { duration: 0 }, (finished) => {
-          'worklet';
-          if (finished) runOnJS(setPlaying)(false);
-        })),
-      );
-    } else if (s === 1) {
-      mockSlideY.value = withSequence(
-        withTiming(FRAME_H, { duration: 0 }),
-        withDelay(60, withTiming(280, { duration: 0 })),
-        withDelay(60, withTiming(80, { duration: 0 })),
-        withDelay(60, withTiming(0, { duration: 0 })),
-        withDelay(80, withTiming(0, { duration: 0 }, (finished) => {
-          'worklet';
-          if (finished) runOnJS(setPlaying)(false);
-        })),
-      );
-    } else if (s === 2) {
-      chipScale.value = withSequence(
-        withTiming(0, { duration: 0 }),
-        withDelay(80, withTiming(1, { duration: 0 })),
-      );
-      chipX.value = withSequence(
-        withTiming(-40, { duration: 0 }),
-        withDelay(80, withTiming(0, { duration: 0 })),
-        withDelay(40, withTiming(-6, { duration: 0 })),
-        withDelay(40, withTiming(6, { duration: 0 })),
-        withDelay(40, withTiming(-3, { duration: 0 })),
-        withDelay(40, withTiming(0, { duration: 0 }, (finished) => {
-          'worklet';
-          if (finished) runOnJS(setPlaying)(false);
-        })),
-      );
-    } else {
-      // Step 3 — bullet fire. All four sequences start synchronously.
-      bulletY.value = withSequence(
-        withTiming(0, { duration: 0 }),
-        withTiming(6, { duration: 0 }),                                      // squash
-        withDelay(80, withTiming(-20, { duration: 0 })),                     // collapse to bullet
-        withDelay(60, withTiming(-0.30 * FRAME_H, { duration: 0 })),
-        withDelay(60, withTiming(-0.65 * FRAME_H, { duration: 0 })),
-        withDelay(60, withTiming(-0.95 * FRAME_H, { duration: 0 })),
-        withDelay(80, withTiming(-1.30 * FRAME_H, { duration: 0 })),
-      );
-      bulletScaleX.value = withSequence(
-        withTiming(1.0, { duration: 0 }),
-        withTiming(1.06, { duration: 0 }),
-        withDelay(80, withTiming(0.18, { duration: 0 })),
-        withDelay(60, withTiming(0.16, { duration: 0 })),
-        withDelay(60, withTiming(0.14, { duration: 0 })),
-        withDelay(60, withTiming(0.12, { duration: 0 })),
-        withDelay(80, withTiming(0.08, { duration: 0 })),
-      );
-      bulletScaleY.value = withSequence(
-        withTiming(1.0, { duration: 0 }),
-        withTiming(0.84, { duration: 0 }),
-        withDelay(80, withTiming(0.46, { duration: 0 })),
-        withDelay(60, withTiming(0.40, { duration: 0 })),
-        withDelay(60, withTiming(0.32, { duration: 0 })),
-        withDelay(60, withTiming(0.26, { duration: 0 })),
-        withDelay(80, withTiming(0.16, { duration: 0 })),
-      );
-      // confirm appears after bullet exits frame, then auto-advances
-      confirmOpacity.value = withSequence(
-        withTiming(0, { duration: 0 }),
-        withDelay(200, withTiming(1, { duration: 0 })),
-        withDelay(600, withTiming(1, { duration: 0 }, (finished) => {
-          'worklet';
-          if (finished) runOnJS(onDone)();
-        })),
-      );
-    }
+  const after = (ms: number, fn: () => void) => {
+    const t = setTimeout(fn, ms);
+    timers.current.push(t);
   };
+
+  const cancelAll = () => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+  };
+
+  // ── Main sequence (fully automated) ───────────────────────────────────────
+
+  const runSequence = () => {
+    // ── 0: Word pops in ──────────────────────────────────────────────────────
+    setStep(0);
+    wordOpacity.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.ease) });
+    wordScale.value   = withSpring(1, { damping: 13, stiffness: 180 });
+
+    after(2000, () => {
+      // ── 1: Mock app slides up ─────────────────────────────────────────────
+      setStep(1);
+      mockSlideY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.cubic) });
+
+      after(1600, () => {
+        // ── 2: Recipient chip snaps in ────────────────────────────────────────
+        setStep(2);
+        chipOpacity.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.ease) });
+        chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
+
+        after(1600, () => {
+          // ── 3: Word card launches, confirm appears ─────────────────────────
+          setStep(3);
+          cardY.value       = withTiming(-FRAME_H * 1.2, { duration: 460, easing: Easing.in(Easing.ease) });
+          cardScale.value   = withTiming(0.45, { duration: 460, easing: Easing.in(Easing.ease) });
+          cardOpacity.value = withTiming(0, { duration: 460 });
+
+          confirmOpacity.value = withDelay(
+            360,
+            withTiming(1, { duration: 320, easing: Easing.out(Easing.ease) }),
+          );
+          confirmY.value = withDelay(
+            360,
+            withTiming(0, { duration: 380, easing: Easing.out(Easing.back(1.6)) }),
+          );
+
+          after(2000, onDone);
+        });
+      });
+    });
+  };
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!visible) return;
-    const t = setTimeout(() => playStep(0), 100);
-    return () => clearTimeout(t);
+    if (!visible) {
+      cancelAll();
+      // Reset all values so the next showing starts clean
+      wordOpacity.value    = 0;
+      wordScale.value      = 0.75;
+      mockSlideY.value     = FRAME_H;
+      chipOpacity.value    = 0;
+      chipScale.value      = 0.5;
+      cardY.value          = 0;
+      cardScale.value      = 1;
+      cardOpacity.value    = 1;
+      confirmOpacity.value = 0;
+      confirmY.value       = 14;
+      setStep(0);
+      return;
+    }
+    after(200, runSequence);
+    return cancelAll;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
-
-  const onNext = () => {
-    if (playing) return;
-    if (step === 3) { onDone(); return; }
-    const next = (step + 1) as Step;
-    setStep(next);
-    playStep(next);
-  };
 
   if (!visible) return null;
 
   return (
     <View style={styles.overlay}>
-      {/* Step indicator squares */}
-      <View style={styles.indicators}>
-        {([0, 1, 2, 3] as const).map((i) => (
-          <View key={i} style={[styles.dot, i === step ? styles.dotActive : styles.dotIdle]} />
-        ))}
-      </View>
+      {/* Step label */}
+      <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+        {STEP_LABELS[step]}
+      </Text>
 
-      {/* Phone frame — overflow:hidden clips bullet trajectory */}
+      {/* ── Phone frame ──────────────────────────────────────────────────── */}
       <View style={styles.frame}>
-        {step === 0 ? (
+
+        {/* Step 0: spotted word */}
+        {step === 0 && (
           <View style={styles.frameCenter}>
-            <Animated.View style={[styles.wordBox, wordAnimStyle]}>
-              <Text variant="h2" color={palette.textBlack} align="center">
+            <Animated.View style={[styles.wordCard, wordAnimStyle]}>
+              <Text variant="h2" align="center">
                 ephemeral
               </Text>
               <Text
@@ -200,67 +178,85 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               </Text>
             </Animated.View>
           </View>
-        ) : (
+        )}
+
+        {/* Steps 1-3: mock Share screen */}
+        {step >= 1 && (
           <Animated.View style={[styles.mockApp, mockAnimStyle]}>
-            <View style={styles.mockHeaderRow}>
-              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
-                Share a word
-              </Text>
+
+            {/* Mock header */}
+            <View style={styles.mockHeader}>
+              <Text variant="h1">Share a word</Text>
             </View>
 
-            <View style={styles.mockInputBox}>
-              <Text variant="h2" color={palette.textBlack}>
-                ephemeral
+            {/* Mock recipient section */}
+            <View style={styles.mockSection}>
+              <Text
+                variant="uppercaseLabel"
+                color={palette.textBlackSoft}
+                style={{ marginBottom: space.s2 }}
+              >
+                Share to
               </Text>
-            </View>
 
-            <View style={styles.mockRecipientRow}>
-              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
-                Share to:
-              </Text>
-              <Animated.View style={[styles.mockChip, chipAnimStyle]}>
-                <Text variant="smallStrong" color={palette.white}>
-                  @rio
-                </Text>
-              </Animated.View>
-            </View>
-
-            {step === 3 && (
-              <>
-                <Animated.View style={[styles.bulletCard, bulletAnimStyle]}>
-                  <Text variant="h2" color={palette.textBlack} align="center">
-                    ephemeral
+              {step === 1 ? (
+                /* Placeholder chip before recipient is selected */
+                <View style={styles.chipPlaceholder}>
+                  <Text variant="small" color={palette.textBlackSoft}>
+                    Add a friend…
+                  </Text>
+                </View>
+              ) : (
+                /* Selected recipient chip */
+                <Animated.View style={[styles.chipSelected, chipAnimStyle]}>
+                  <Text variant="smallStrong" color={palette.white}>
+                    @rio
                   </Text>
                 </Animated.View>
-                <Animated.View style={[styles.confirmOuter, confirmAnimStyle]}>
-                  <View style={styles.confirmInner}>
-                    <Text variant="smallStrong" color={palette.white}>
-                      Shared!
-                    </Text>
-                  </View>
-                </Animated.View>
-              </>
+              )}
+            </View>
+
+            {/* Mock word card — anchored at bottom, launches in step 3 */}
+            <Animated.View style={[styles.mockWordCard, cardAnimStyle]}>
+              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                Word
+              </Text>
+              <Text variant="h2" style={{ marginTop: space.s1 }}>
+                ephemeral
+              </Text>
+            </Animated.View>
+
+            {/* Step 3: "Shared!" confirmation pill */}
+            {step === 3 && (
+              <Animated.View style={[styles.confirmOuter, confirmAnimStyle]}>
+                <View style={styles.confirmPill}>
+                  <Text variant="smallStrong" color={palette.white}>
+                    Shared!
+                  </Text>
+                </View>
+              </Animated.View>
             )}
+
           </Animated.View>
         )}
       </View>
 
-      {/* Navigation */}
-      <View style={styles.controls}>
-        <PillButton
-          label="Skip"
-          variant="darkOutlined"
-          onPress={onDone}
-          style={styles.controlBtn}
-        />
-        <PillButton
-          label={step === 3 ? 'Got it' : 'Next →'}
-          variant="primary"
-          onPress={onNext}
-          disabled={playing}
-          style={styles.controlBtn}
-        />
+      {/* ── Step indicator dots ──────────────────────────────────────────── */}
+      <View style={styles.indicators}>
+        {([0, 1, 2, 3] as const).map((i) => (
+          <View
+            key={i}
+            style={[styles.dot, i === step ? styles.dotActive : styles.dotIdle]}
+          />
+        ))}
       </View>
+
+      {/* Skip */}
+      <PillButton
+        label="Skip"
+        variant="darkOutlined"
+        onPress={() => { cancelAll(); onDone(); }}
+      />
     </View>
   );
 }
@@ -276,47 +272,46 @@ const styles = StyleSheet.create({
     backgroundColor: palette.neutralWarm,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space.s4,
+    gap: space.s3,
   },
-  indicators: {
-    flexDirection: 'row',
-    gap: space.s2,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
-  },
-  dotActive: { backgroundColor: palette.black },
-  dotIdle:   { backgroundColor: palette.white },
+
+  // ── Phone frame
   frame: {
     width: FRAME_W,
     height: FRAME_H,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: palette.ceramic,
     overflow: 'hidden',
     backgroundColor: palette.neutralWarm,
+    shadowColor: '#000',
+    shadowOpacity: 0.14,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
   frameCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: space.s3,
+    padding: space.s4,
   },
-  wordBox: {
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
+
+  // ── Step 0: word card
+  wordCard: {
+    borderRadius: radii.card,
     backgroundColor: palette.white,
-    padding: space.s3,
+    padding: space.s4,
     alignItems: 'center',
     alignSelf: 'stretch',
-    shadowOpacity: 0,
-    elevation: 0,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
+
+  // ── Mock app (steps 1-3)
   mockApp: {
     position: 'absolute',
     left: 0,
@@ -324,76 +319,80 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     backgroundColor: palette.neutralWarm,
-    borderTopWidth: 2,
-    borderTopColor: palette.black,
   },
-  mockHeaderRow: {
-    marginTop: space.s3,
-    marginHorizontal: space.s3,
-    marginBottom: space.s2,
+  mockHeader: {
+    paddingHorizontal: space.s3,
+    paddingTop: space.s3,
+    paddingBottom: space.s2,
   },
-  mockInputBox: {
-    marginHorizontal: space.s3,
-    height: 48,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
-    backgroundColor: palette.white,
-    paddingHorizontal: space.s2,
-    justifyContent: 'center',
-    marginBottom: space.s3,
-    shadowOpacity: 0,
-    elevation: 0,
+  mockSection: {
+    paddingHorizontal: space.s3,
+    paddingTop: space.s2,
   },
-  mockRecipientRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.s2,
-    marginHorizontal: space.s3,
+
+  // ── Recipient chips
+  chipPlaceholder: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: palette.inputBorder,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
   },
-  mockChip: {
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    backgroundColor: palette.black,
+  chipSelected: {
+    alignSelf: 'flex-start',
+    borderRadius: radii.pill,
+    backgroundColor: palette.greenAccent,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
   },
-  bulletCard: {
+
+  // ── Mock word card (bottom of mock app)
+  mockWordCard: {
     position: 'absolute',
     bottom: space.s3,
     left: space.s3,
     right: space.s3,
-    height: 64,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
+    borderRadius: radii.card,
     backgroundColor: palette.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOpacity: 0,
-    elevation: 0,
+    padding: space.s3,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
   },
+
+  // ── Confirmation pill (step 3)
   confirmOuter: {
     position: 'absolute',
-    top: space.s4,
+    top: space.s5,
     left: 0,
     right: 0,
     alignItems: 'center',
   },
-  confirmInner: {
+  confirmPill: {
+    borderRadius: radii.pill,
     backgroundColor: palette.greenAccent,
-    borderWidth: 2,
-    borderColor: palette.black,
-    borderRadius: 0,
     paddingVertical: space.s2,
-    paddingHorizontal: space.s3,
+    paddingHorizontal: space.s4,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  controls: {
+
+  // ── Step indicator dots
+  indicators: {
     flexDirection: 'row',
-    gap: space.s3,
+    gap: 6,
   },
-  controlBtn: {
-    minWidth: 100,
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
+  dotActive: { backgroundColor: palette.greenAccent },
+  dotIdle:   { backgroundColor: palette.ceramic },
 });
