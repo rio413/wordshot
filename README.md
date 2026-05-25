@@ -1,4 +1,4 @@
-# wordshot
+# Word Share — Ping words to friends
 
 A mobile-first, notification-driven social vocabulary app. Friends send each
 other useful words; the receiver gets a push, opens the card, and saves or

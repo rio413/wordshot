@@ -169,7 +169,7 @@ export default function ProfileScreen() {
         </View>
 
         <Text variant="micro" color={palette.textBlackSoft} style={styles.version}>
-          Wordshot v{appVersion}
+          Word Share v{appVersion}
         </Text>
       </ScrollView>
 

@@ -66,7 +66,7 @@ export default function Login() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Text variant="hero" color={palette.starbucksGreen}>
-              wordshot
+              Word Share
             </Text>
             <Text variant="bodyLarge" color={palette.textBlackSoft} style={{ marginTop: 8 }}>
               Send words. Build a bank. Together.
@@ -114,7 +114,7 @@ export default function Login() {
               style={styles.toggleRow}
             >
               <Text variant="small" color={palette.textBlackSoft}>
-                {mode === 'signin' ? "New to Wordshot? " : 'Already have an account? '}
+                {mode === 'signin' ? "New to Word Share? " : 'Already have an account? '}
               </Text>
               <Text variant="smallStrong" color={palette.greenAccent}>
                 {mode === 'signin' ? 'Sign up' : 'Sign in'}

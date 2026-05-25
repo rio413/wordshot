@@ -579,9 +579,11 @@ When refining existing screens generated with this design system:
 - Careers-page specific components (cup-name card, search radio grid) are referenced in token names but not covered by this extraction
 - Starbucks Visa Card / Starbucks-Card (SVC) detailed mockup specs are hinted at by `--svcRoundedCorners` and `--svcShadowFilter` tokens but not fully documented
 
-## 10. Wordshot Send Surface — Bottom Thumb Zone & Bullet Trajectory
+## 10. Word Share Send Surface — Bottom Thumb Zone & Bullet Trajectory
 
-This section is wordshot-specific and intentionally departs from the Starbucks-inspired tokens above. The Send screen (`app/(tabs)/index.tsx`) is the product's single most important surface and follows a Brutalist override layered on top of the base system.
+> **Brand note.** The app is named **Word Share**, but the core send interaction is still conceived as firing a *Shot*: a word collapses into an angular projectile (bullet) and is launched from the bottom of the screen to the top in a discrete stop-motion sequence. The aesthetic for this surface remains strictly **Angular / Brutalist** (`borderRadius: 0`, `2px` solid black borders) — rounding the Send surface is not allowed, even though the rest of the app uses the standard Starbucks-inspired pill/card tokens.
+
+This section is Word Share–specific and intentionally departs from the Starbucks-inspired tokens above. The Send screen (`app/(tabs)/index.tsx`) is the product's single most important surface and follows a Brutalist override layered on top of the base system.
 
 ### Primary Action Zone — Bottom Aligned
 
@@ -639,7 +641,7 @@ The `Send Word` card transforms into an angular projectile and shoots from its b
 
 **Why bottom-to-top.** Anchoring the card at the bottom gives the bullet a full-viewport trajectory, which makes the stop-motion frames register as a high-speed shot rather than a small twitch. It also visually reinforces the product metaphor: the user cocks (chambers), fires, and the projectile leaves the device in a single thumb gesture.
 
-## 11. Wordshot Incoming List — Swipe-to-Clear Interaction
+## 11. Word Share Incoming List — Swipe-to-Clear Interaction
 
 The Incoming screen (`app/(tabs)/incoming.tsx`) lists all pending word shots in a `FlatList`. Each row is a `SwipeableWordRow` that supports two irreversible swipe gestures. Like the Send screen, this surface follows the Brutalist override: `0px` border radius, `2px` solid black borders on every card.
 

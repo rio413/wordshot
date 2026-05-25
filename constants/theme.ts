@@ -1,5 +1,5 @@
 /**
- * wordshot theme — Starbucks-inspired design tokens.
+ * Word Share theme — Starbucks-inspired design tokens.
  * Source: DESIGN.md at repo root (do not edit tokens without re-reading the spec).
  *
  * Anchor: 1rem = 16px (RN doesn't use rem, all values are px).
