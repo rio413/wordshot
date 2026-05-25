@@ -84,7 +84,7 @@ export default function GroupsScreen() {
         <Text variant="h1">My Groups</Text>
         <PillButton
           label="+ New"
-          variant="dark"
+          variant="primary"
           onPress={() => router.push('/groups/new')}
         />
       </View>
