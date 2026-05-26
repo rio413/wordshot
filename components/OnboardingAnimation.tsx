@@ -255,14 +255,12 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               )}
             </Animated.View>
 
-            {/* Step 3: "Shared!" confirmation pill */}
+            {/* Step 3: "Shared!" large text */}
             {step === 3 && (
               <Animated.View style={[styles.confirmOuter, confirmAnimStyle]}>
-                <View style={styles.confirmPill}>
-                  <Text variant="smallStrong" color={palette.white}>
-                    Shared!
-                  </Text>
-                </View>
+                <Text variant="hero" color={palette.greenAccent} align="center">
+                  Shared!
+                </Text>
               </Animated.View>
             )}
 
@@ -396,24 +394,15 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  // ── Confirmation pill (step 3) — above the word card, left-aligned (matches real sentBanner)
+  // ── Confirmation text (step 3) — centered in the frame
   confirmOuter: {
     position: 'absolute',
-    bottom: 128,
-    left: space.s3,
-    right: space.s3,
-    alignItems: 'flex-start',
-  },
-  confirmPill: {
-    borderRadius: radii.pill,
-    backgroundColor: palette.greenAccent,
-    paddingVertical: space.s2,
-    paddingHorizontal: space.s4,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // ── Step indicator dots
