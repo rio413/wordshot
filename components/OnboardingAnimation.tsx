@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -187,26 +187,23 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
       {/* ── Phone frame ──────────────────────────────────────────────────── */}
       <View style={styles.frame}>
 
-        {/* Step 0: spotted word */}
+        {/* Step 0: illustration — user excited about a new word */}
         {step === 0 && (
-          <View style={styles.frameCenter}>
-            <Animated.View style={[styles.wordCard, wordAnimStyle]}>
-              <Text variant="h2" align="center">
-                astringent
-              </Text>
-              <Text variant="body" align="center" style={{ marginTop: space.s1 }}>
-                渋い・収れん性のある
-              </Text>
-              <Text
-                variant="uppercaseLabel"
-                color={palette.textBlackSoft}
-                align="center"
-                style={{ marginTop: space.s2 }}
-              >
-                a word you just learned
-              </Text>
-            </Animated.View>
-          </View>
+          <Animated.View style={[styles.frameCenter, wordAnimStyle]}>
+            <Image
+              source={require('@/assets/images/wordillustration.png')}
+              style={styles.illustration}
+              resizeMode="contain"
+            />
+            <Text
+              variant="uppercaseLabel"
+              color={palette.textBlackSoft}
+              align="center"
+              style={{ marginTop: space.s2 }}
+            >
+              a word you can't wait to share
+            </Text>
+          </Animated.View>
         )}
 
         {/* Steps 1-3: mock Share screen */}
@@ -339,21 +336,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: space.s4,
+    paddingHorizontal: space.s2,
+    paddingBottom: space.s3,
   },
-
-  // ── Step 0: word card
-  wordCard: {
-    borderRadius: radii.card,
-    backgroundColor: palette.white,
-    padding: space.s4,
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  illustration: {
+    width: FRAME_W - space.s3,
+    height: 380,
   },
 
   // ── Mock app (steps 1-3)
