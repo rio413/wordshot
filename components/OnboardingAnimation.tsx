@@ -17,6 +17,9 @@ const FRAME_W = 300;
 const WORD = 'astringent';
 const JP_MEANING = '渋い・収れん性のある';
 
+// When typing finishes: 800 + (10-1)*130 + 350 + (10-1)*110 = 3310ms
+const JP_END_MS = 800 + (WORD.length - 1) * 130 + 350 + (JP_MEANING.length - 1) * 110;
+
 type Step = 0 | 1 | 2 | 3;
 
 const STEP_LABELS = ['Spot a word', 'Open Word Share', 'Pick a friend', 'Share it'];
@@ -30,11 +33,12 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   const [step, setStep] = useState<Step>(0);
   const [typedWord, setTypedWord] = useState('');
   const [typedMeaning, setTypedMeaning] = useState('');
+  const [tapTarget, setTapTarget] = useState<'friend' | 'share' | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Step 0 — word intro
   const wordOpacity = useSharedValue(0);
-  const wordScale  = useSharedValue(0.75);
+  const wordScale   = useSharedValue(0.75);
 
   // Step 1 — mock app slides up
   const mockSlideY = useSharedValue(FRAME_H);
@@ -44,11 +48,15 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   const chipScale   = useSharedValue(0.5);
 
   // Step 3 — word card launches + confirm appears
-  const cardY      = useSharedValue(0);
-  const cardScale  = useSharedValue(1);
-  const cardOpacity   = useSharedValue(1);
+  const cardY          = useSharedValue(0);
+  const cardScale      = useSharedValue(1);
+  const cardOpacity    = useSharedValue(1);
   const confirmOpacity = useSharedValue(0);
   const confirmY       = useSharedValue(14);
+
+  // Tap ripple indicator
+  const tapRippleOpacity = useSharedValue(0);
+  const tapRippleScale   = useSharedValue(0.6);
 
   // ── Animated styles ────────────────────────────────────────────────────────
 
@@ -76,6 +84,11 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
     transform: [{ translateY: confirmY.value }],
   }));
 
+  const tapRippleAnimStyle = useAnimatedStyle(() => ({
+    opacity: tapRippleOpacity.value,
+    transform: [{ scale: tapRippleScale.value }],
+  }));
+
   // ── Timer helpers ──────────────────────────────────────────────────────────
 
   const after = (ms: number, fn: () => void) => {
@@ -86,6 +99,21 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
   const cancelAll = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+  };
+
+  // ── Tap ripple: appear → expand + fade → callback ─────────────────────────
+
+  const showTapThen = (target: 'friend' | 'share', holdMs: number, cb: () => void) => {
+    setTapTarget(target);
+    tapRippleOpacity.value = 0;
+    tapRippleScale.value   = 0.6;
+    tapRippleOpacity.value = withTiming(0.8, { duration: 180 });
+    tapRippleScale.value   = withTiming(1, { duration: 180 });
+    after(holdMs - 280, () => {
+      tapRippleScale.value   = withTiming(1.5, { duration: 260, easing: Easing.out(Easing.ease) });
+      tapRippleOpacity.value = withTiming(0, { duration: 280 });
+    });
+    after(holdMs, () => { setTapTarget(null); cb(); });
   };
 
   // ── Per-step runners (called by auto-sequence and by Next button) ──────────
@@ -107,7 +135,8 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
       after(jpStart + i * 110, () => setTypedMeaning(JP_MEANING.slice(0, i + 1)));
     });
 
-    after(4800, runStep2);
+    // Show tap hint 350ms after all typing ends, then advance
+    after(JP_END_MS + 350, () => showTapThen('friend', 600, runStep2));
   };
 
   const runStep2 = () => {
@@ -116,11 +145,12 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
     setStep(2);
     chipOpacity.value = withTiming(1, { duration: 250, easing: Easing.out(Easing.ease) });
     chipScale.value   = withSpring(1, { damping: 10, stiffness: 300 });
-    after(3200, runStep3);
+    after(2200, () => showTapThen('share', 600, runStep3));
   };
 
   const runStep3 = () => {
     setStep(3);
+    setTapTarget(null);
     cardY.value       = withTiming(-FRAME_H * 1.2, { duration: 520, easing: Easing.in(Easing.ease) });
     cardScale.value   = withTiming(0.45, { duration: 520, easing: Easing.in(Easing.ease) });
     cardOpacity.value = withTiming(0, { duration: 520 });
@@ -144,6 +174,9 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
 
   const onNext = () => {
     cancelAll();
+    setTapTarget(null);
+    tapRippleOpacity.value = 0;
+    tapRippleScale.value   = 0.6;
     if (step === 0) runStep1();
     else if (step === 1) runStep2();
     else if (step === 2) runStep3();
@@ -157,16 +190,19 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
       cancelAll();
       setTypedWord('');
       setTypedMeaning('');
-      wordOpacity.value    = 0;
-      wordScale.value      = 0.75;
-      mockSlideY.value     = FRAME_H;
-      chipOpacity.value    = 0;
-      chipScale.value      = 0.5;
-      cardY.value          = 0;
-      cardScale.value      = 1;
-      cardOpacity.value    = 1;
-      confirmOpacity.value = 0;
-      confirmY.value       = 14;
+      setTapTarget(null);
+      wordOpacity.value      = 0;
+      wordScale.value        = 0.75;
+      mockSlideY.value       = FRAME_H;
+      chipOpacity.value      = 0;
+      chipScale.value        = 0.5;
+      cardY.value            = 0;
+      cardScale.value        = 1;
+      cardOpacity.value      = 1;
+      confirmOpacity.value   = 0;
+      confirmY.value         = 14;
+      tapRippleOpacity.value = 0;
+      tapRippleScale.value   = 0.6;
       setStep(0);
       return;
     }
@@ -240,20 +276,35 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               )}
             </View>
 
-            {/* Mock word card — anchored at bottom, launches in step 3 */}
-            <Animated.View style={[styles.mockWordCard, cardAnimStyle]}>
-              <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
-                Word
-              </Text>
-              <Text variant="h2" style={{ marginTop: space.s1 }}>
-                {typedWord}{typedWord.length < WORD.length ? '|' : ''}
-              </Text>
-              {typedWord.length === WORD.length && (
-                <Text variant="small" color={palette.textBlackSoft} style={{ marginTop: space.s1 }}>
-                  {typedMeaning}{typedMeaning.length < JP_MEANING.length ? '|' : ''}
-                </Text>
-              )}
-            </Animated.View>
+            {/* Bottom: word card + Share button — animate as one unit in step 3 */}
+            <View style={styles.mockBottom}>
+              <Animated.View style={[styles.mockBottomInner, cardAnimStyle]}>
+                <View style={styles.mockWordCard}>
+                  <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
+                    Word
+                  </Text>
+                  <Text variant="h2" style={{ marginTop: space.s1 }}>
+                    {typedWord}{typedWord.length < WORD.length ? '|' : ''}
+                  </Text>
+                  {/* Always rendered so card height stays constant during typing */}
+                  <Text variant="small" color={palette.textBlackSoft} style={{ marginTop: space.s1 }}>
+                    {typedMeaning}
+                    {typedMeaning.length > 0 && typedMeaning.length < JP_MEANING.length ? '|' : null}
+                  </Text>
+                </View>
+                <View style={styles.mockShareBtn}>
+                  <Text variant="smallStrong" color={palette.white}>↑  Share</Text>
+                </View>
+              </Animated.View>
+            </View>
+
+            {/* Tap ripple — positioned over the target element */}
+            {tapTarget === 'friend' && (
+              <Animated.View style={[styles.tapRipple, styles.tapFriend, tapRippleAnimStyle]} />
+            )}
+            {tapTarget === 'share' && (
+              <Animated.View style={[styles.tapRipple, styles.tapShare, tapRippleAnimStyle]} />
+            )}
 
             {/* Step 3: "Shared!" large text */}
             {step === 3 && (
@@ -278,16 +329,18 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
         ))}
       </View>
 
-      {/* Skip + Next */}
+      {/* Skip + Next (Skip hidden on final step so Done gets full width) */}
       <View style={styles.buttonRow}>
-        <View style={styles.buttonWrap}>
-          <PillButton
-            label="Skip"
-            variant="darkOutlined"
-            fullWidth
-            onPress={() => { cancelAll(); onDone(); }}
-          />
-        </View>
+        {step < 3 && (
+          <View style={styles.buttonWrap}>
+            <PillButton
+              label="Skip"
+              variant="darkOutlined"
+              fullWidth
+              onPress={() => { cancelAll(); onDone(); }}
+            />
+          </View>
+        )}
         <View style={styles.buttonWrap}>
           <PillButton
             label={step === 3 ? 'Done' : 'Next'}
@@ -378,12 +431,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
 
-  // ── Mock word card (bottom of mock app)
-  mockWordCard: {
+  // ── Bottom: word card + Share button
+  mockBottom: {
     position: 'absolute',
-    bottom: space.s3,
-    left: space.s3,
-    right: space.s3,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: space.s3,
+    paddingBottom: space.s3,
+  },
+  mockBottomInner: {
+    gap: space.s2,
+  },
+  mockWordCard: {
     borderRadius: radii.card,
     backgroundColor: palette.white,
     padding: space.s3,
@@ -393,6 +453,25 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  mockShareBtn: {
+    borderRadius: radii.pill,
+    backgroundColor: palette.greenAccent,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ── Tap ripple
+  tapRipple: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    zIndex: 10,
+  },
+  tapFriend: { top: 88, left: 46 },
+  tapShare:  { bottom: 19, left: 130 },
 
   // ── Confirmation text (step 3) — centered in the frame
   confirmOuter: {
