@@ -1,14 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Modal, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, Modal, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
 import { Card } from '@/components/Card';
+import { PillButton } from '@/components/PillButton';
 import { FloatingLabelInput } from '@/components/FloatingLabelInput';
 import { useAuth } from '@/lib/auth';
-import { subscribeToBank } from '@/lib/db';
+import { deleteFromBank, subscribeToBank } from '@/lib/db';
 import { WordCard } from '@/lib/types';
 import { palette, space } from '@/constants/theme';
+
+function wordFontSize(word: string): number {
+  const len = word.length;
+  if (len <= 6)  return 48; // 6 CJK × 48px = 288px ✓
+  if (len <= 9)  return 32; // 9 CJK × 32px = 288px ✓
+  if (len <= 14) return 24;
+  if (len <= 24) return 20;
+  return 16;
+}
 
 export default function BankScreen() {
   const { user } = useAuth();
@@ -16,16 +26,49 @@ export default function BankScreen() {
   const [query, setQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<WordCard | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    const unsub = subscribeToBank(user.uid, setWords);
+    const unsub = subscribeToBank(user.uid, setWords, () => setLoadError(true));
     return unsub;
   }, [user]);
 
+  const onDelete = () => {
+    if (!user || !selected) return;
+    Alert.alert(
+      'Remove from bank',
+      `Remove "${selected.word}" from your bank? This can't be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            try {
+              await deleteFromBank(user.uid, selected.id);
+              setSelected(null);
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const onRefresh = () => {
+    if (!user) return;
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 600);
+    setLoadError(false);
+    const unsub = subscribeToBank(
+      user.uid,
+      (w) => { setWords(w); setRefreshing(false); },
+      () => { setRefreshing(false); setLoadError(true); },
+    );
+    return unsub;
   };
 
   const filtered = useMemo(() => {
@@ -46,6 +89,11 @@ export default function BankScreen() {
         <Text variant="micro" style={{ marginTop: 4 }}>
           {words.length} {words.length === 1 ? 'word' : 'words'} saved
         </Text>
+        {loadError ? (
+          <Text variant="small" color={palette.red} style={{ marginTop: 4 }}>
+            Couldn't load your bank. Pull down to retry.
+          </Text>
+        ) : null}
         <View style={{ marginTop: space.s3 }}>
           <FloatingLabelInput label="Search" value={query} onChangeText={setQuery} />
         </View>
@@ -79,7 +127,14 @@ export default function BankScreen() {
             </View>
             {selected ? (
               <>
-                <Text variant="display" color={palette.starbucksGreen} align="center" style={{ marginTop: space.s4 }}>
+                <Text
+                  variant="display"
+                  color={palette.starbucksGreen}
+                  align="center"
+                  numberOfLines={2}
+                  adjustsFontSizeToFit
+                  style={{ marginTop: space.s4, fontSize: wordFontSize(selected.word) }}
+                >
                   {selected.word}
                 </Text>
                 <View style={styles.detailFromRow}>
@@ -98,6 +153,15 @@ export default function BankScreen() {
                     {selected.note}
                   </Text>
                 ) : null}
+                <View style={{ marginTop: space.s5 }}>
+                  <PillButton
+                    label={deleting ? 'Removing…' : 'Remove from bank'}
+                    variant="destructive"
+                    loading={deleting}
+                    fullWidth
+                    onPress={onDelete}
+                  />
+                </View>
               </>
             ) : null}
           </Pressable>

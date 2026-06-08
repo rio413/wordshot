@@ -12,6 +12,8 @@ import {
   useMemo,
   useState,
 } from 'react';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
 import { auth, firestore, collections } from './firebase';
 import { UserProfile } from './types';
 import { DEMO_MODE, demo } from './demo';
@@ -33,8 +35,8 @@ type AuthState = {
 type AuthAPI = AuthState & {
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, username: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   deleteAccount: (password?: string) => Promise<void>;
@@ -139,14 +141,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       },
 
-      async signInWithGoogle() {
-        if (DEMO_MODE) return enterDemo(setUser, setProfile, 'google@wordshot.local');
-        throw new Error('Google sign-in not yet wired (stage 4).');
-      },
-
       async signInWithApple() {
         if (DEMO_MODE) return enterDemo(setUser, setProfile, 'apple@wordshot.local');
-        throw new Error('Apple sign-in not yet wired (stage 3).');
+
+        // Generate nonce — Apple requires SHA256 hash sent in the request,
+        // raw nonce is passed to Firebase so it can verify the token.
+        const rawNonce = Array.from(
+          { length: 20 },
+          () => Math.floor(Math.random() * 36).toString(36),
+        ).join('');
+        const hashedNonce = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          rawNonce,
+        );
+
+        const appleCredential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+          nonce: hashedNonce,
+        });
+
+        const { identityToken, fullName, email: appleEmail } = appleCredential;
+        if (!identityToken) throw new Error('Apple Sign-In failed — no identity token.');
+
+        const provider = new auth.OAuthProvider('apple.com');
+        const credential = provider.credential({ idToken: identityToken, rawNonce });
+        const result = await auth().signInWithCredential(credential);
+        const u = result.user;
+
+        // Create Firestore profile for first-time users.
+        const snap = await collections.users().doc(u.uid).get();
+        if (!snap.exists()) {
+          const raw = (
+            fullName?.givenName?.toLowerCase() ||
+            (appleEmail || u.email || '').split('@')[0].toLowerCase()
+          ).replace(/[^a-z0-9_]/g, '').slice(0, 15) || 'user';
+
+          let username = raw;
+          let attempt = 1;
+          while ((await collections.usernames().doc(username).get()).exists()) {
+            username = `${raw}${attempt++}`;
+          }
+
+          const profileDoc: UserProfile = {
+            uid: u.uid,
+            username,
+            displayName: fullName?.givenName || username,
+            email: appleEmail || u.email,
+            photoURL: null,
+            pushTokens: [],
+            createdAt: Date.now(),
+          };
+          const batch = firestore().batch();
+          batch.set(collections.users().doc(u.uid), profileDoc);
+          batch.set(collections.usernames().doc(username), { uid: u.uid });
+          await batch.commit();
+          setProfile(profileDoc);
+        }
+      },
+
+      async forgotPassword(email: string) {
+        if (DEMO_MODE) return;
+        try {
+          await auth().sendPasswordResetEmail(email.trim());
+        } catch (e: any) {
+          throw new Error(authErrorMessage(e));
+        }
       },
 
       async signOut() {

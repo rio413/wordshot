@@ -291,17 +291,18 @@ export default function SendScreen() {
               onRejected={onSwipeRejected}
             >
               <Text variant="uppercaseLabel" color={palette.textBlackSoft}>
-                Word
+                Word or phrase
               </Text>
               <TextInput
                 ref={wordInputRef}
                 value={word}
                 onChangeText={(text) => { setWord(text); if (sendError) setSendError(null); }}
-                placeholder="ephemeral"
+                placeholder="type a word or phrase worth sharing"
+                maxLength={200}
                 placeholderTextColor={palette.textBlackSoft}
                 autoCorrect={false}
                 autoCapitalize="none"
-                returnKeyType="next"
+                multiline
                 style={styles.wordInput}
               />
               {showNote ? (
@@ -361,12 +362,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   wordInput: {
-    ...type.display,
-    fontSize: 40,
-    lineHeight: 48,
+    fontFamily: type.h2.fontFamily,
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: type.h2.letterSpacing,
     marginTop: space.s2,
     marginBottom: space.s3,
     color: palette.textBlack,
+    textAlignVertical: 'top',
   },
   noteToggle: {
     flexDirection: 'row',

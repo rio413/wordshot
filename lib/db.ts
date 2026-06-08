@@ -84,24 +84,24 @@ export async function decideCard(cardId: string, status: 'saved' | 'discarded') 
   }
 
   const ref = collections.cards().doc(cardId);
-  console.log('[decideCard] step1: reading card', cardId);
   const snap = await ref.get();
   if (!snap.exists()) throw new Error('Card not found');
   const card = snap.data() as WordCard;
-  console.log('[decideCard] step2: updating card status →', status, 'toUid:', card.toUid);
   const updates = { status, decidedAt: Date.now() };
   await ref.update(updates);
   if (status === 'saved') {
-    console.log('[decideCard] step3: writing savedWords for uid', card.toUid);
     await collections
       .savedWords(card.toUid)
       .doc(cardId)
       .set({ ...card, ...updates });
-    console.log('[decideCard] done');
   }
 }
 
-export function subscribeToBank(uid: string, onChange: (words: WordCard[]) => void) {
+export function subscribeToBank(
+  uid: string,
+  onChange: (words: WordCard[]) => void,
+  onError?: (e: Error) => void,
+) {
   if (DEMO_MODE) return demo.subscribeBank(onChange);
   return collections
     .savedWords(uid)
@@ -111,11 +111,15 @@ export function subscribeToBank(uid: string, onChange: (words: WordCard[]) => vo
         if (!snap) return;
         onChange(snap.docs.map((d: any) => d.data() as WordCard));
       },
-      () => {},
+      (e: Error) => onError?.(e),
     );
 }
 
-export function subscribeToInbox(uid: string, onChange: (cards: WordCard[]) => void) {
+export function subscribeToInbox(
+  uid: string,
+  onChange: (cards: WordCard[]) => void,
+  onError?: (e: Error) => void,
+) {
   if (DEMO_MODE) return demo.subscribeInbox(onChange);
   return collections
     .cards()
@@ -127,8 +131,13 @@ export function subscribeToInbox(uid: string, onChange: (cards: WordCard[]) => v
         if (!snap) return;
         onChange(snap.docs.map((d: any) => d.data() as WordCard));
       },
-      () => {},
+      (e: Error) => onError?.(e),
     );
+}
+
+export async function deleteFromBank(uid: string, cardId: string): Promise<void> {
+  if (DEMO_MODE) return;
+  await collections.savedWords(uid).doc(cardId).delete();
 }
 
 export async function getCard(cardId: string): Promise<WordCard | null> {

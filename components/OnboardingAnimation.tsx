@@ -235,6 +235,8 @@ export function OnboardingAnimation({ visible, onDone }: Props) {
               variant="uppercaseLabel"
               color={palette.textBlackSoft}
               align="center"
+              numberOfLines={1}
+              adjustsFontSizeToFit
               style={{ marginTop: space.s2 }}
             >
               a word you can't wait to share
@@ -387,12 +389,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: space.s2,
-    paddingBottom: space.s3,
+    paddingHorizontal: space.s3,
+    paddingBottom: space.s2,
   },
   illustration: {
-    width: FRAME_W - space.s3,
-    height: 380,
+    width: FRAME_W,
+    height: 430,
   },
 
   // ── Mock app (steps 1-3)

@@ -9,10 +9,10 @@ import { useAuth } from '@/lib/auth';
 import { palette, space } from '@/constants/theme';
 import { OnboardingAnimation } from '@/components/OnboardingAnimation';
 
-type Mode = 'signin' | 'signup';
+type Mode = 'signin' | 'signup' | 'forgot';
 
 export default function Login() {
-  const { signInWithEmail, signUpWithEmail, signInWithApple, signInWithGoogle } = useAuth();
+  const { signInWithEmail, signUpWithEmail, signInWithApple, forgotPassword } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -35,6 +35,23 @@ export default function Login() {
     }
   };
 
+  const onForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Enter your email first', 'Type your email above, then tap "Send reset link".');
+      return;
+    }
+    setBusy(true);
+    try {
+      await forgotPassword(email);
+      Alert.alert('Check your inbox', `A password reset link has been sent to ${email.trim()}.`);
+      setMode('signin');
+    } catch (e: any) {
+      Alert.alert('Could not send reset email', e?.message ?? 'Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onApple = async () => {
     setBusy(true);
     try {
@@ -43,17 +60,6 @@ export default function Login() {
       if (e?.code !== 'ERR_REQUEST_CANCELED') {
         Alert.alert('Apple sign-in failed', e?.message ?? 'Please try again.');
       }
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onGoogle = async () => {
-    setBusy(true);
-    try {
-      await signInWithGoogle();
-    } catch (e: any) {
-      Alert.alert('Google sign-in failed', e?.message ?? 'Please try again.');
     } finally {
       setBusy(false);
     }
@@ -79,65 +85,92 @@ export default function Login() {
             </Text>
           </View>
 
-          <View style={styles.form}>
-            <Text variant="h2" style={styles.modeTitle}>
-              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
-            </Text>
-
-            {mode === 'signup' ? (
+          {mode === 'forgot' ? (
+            <View style={styles.form}>
+              <Text variant="h2" style={styles.modeTitle}>Reset password</Text>
               <FloatingLabelInput
-                label="Username"
+                label="Email"
                 autoCapitalize="none"
                 autoCorrect={false}
-                value={username}
-                onChangeText={setUsername}
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
               />
-            ) : null}
-            <FloatingLabelInput
-              label="Email"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <FloatingLabelInput
-              label="Password"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
-            <PillButton
-              label={mode === 'signin' ? 'Sign in' : 'Create account'}
-              onPress={onPrimary}
-              loading={busy}
-              fullWidth
-              size="large"
-            />
-
-            <Pressable
-              onPress={() => setMode((m) => (m === 'signin' ? 'signup' : 'signin'))}
-              style={styles.toggleRow}
-            >
-              <Text variant="small" color={palette.textBlackSoft}>
-                {mode === 'signin' ? "New to Word Share? " : 'Already have an account? '}
+              <PillButton
+                label={busy ? 'Sending…' : 'Send reset link'}
+                onPress={onForgotPassword}
+                loading={busy}
+                fullWidth
+                size="large"
+              />
+              <Pressable onPress={() => setMode('signin')} style={styles.toggleRow}>
+                <Text variant="smallStrong" color={palette.greenAccent}>Back to sign in</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <Text variant="h2" style={styles.modeTitle}>
+                {mode === 'signin' ? 'Welcome back' : 'Create your account'}
               </Text>
-              <Text variant="smallStrong" color={palette.greenAccent}>
-                {mode === 'signin' ? 'Sign up' : 'Sign in'}
-              </Text>
-            </Pressable>
-          </View>
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text variant="micro" style={styles.dividerLabel}>
-              OR
-            </Text>
-            <View style={styles.dividerLine} />
-          </View>
+              {mode === 'signup' ? (
+                <FloatingLabelInput
+                  label="Username"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={username}
+                  onChangeText={setUsername}
+                />
+              ) : null}
+              <FloatingLabelInput
+                label="Email"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <FloatingLabelInput
+                label="Password"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+              />
+              <PillButton
+                label={mode === 'signin' ? 'Sign in' : 'Create account'}
+                onPress={onPrimary}
+                loading={busy}
+                fullWidth
+                size="large"
+              />
 
-          <View style={styles.providers}>
-            {Platform.OS === 'ios' ? (
+              {mode === 'signin' ? (
+                <Pressable onPress={() => setMode('forgot')} style={styles.toggleRow}>
+                  <Text variant="small" color={palette.textBlackSoft}>Forgot your password?</Text>
+                </Pressable>
+              ) : null}
+
+              <Pressable
+                onPress={() => setMode((m) => (m === 'signin' ? 'signup' : 'signin'))}
+                style={styles.toggleRow}
+              >
+                <Text variant="small" color={palette.textBlackSoft}>
+                  {mode === 'signin' ? "New to Word Share? " : 'Already have an account? '}
+                </Text>
+                <Text variant="smallStrong" color={palette.greenAccent}>
+                  {mode === 'signin' ? 'Sign up' : 'Sign in'}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {mode !== 'forgot' && Platform.OS === 'ios' ? (
+            <>
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <Text variant="micro" style={styles.dividerLabel}>OR</Text>
+                <View style={styles.dividerLine} />
+              </View>
               <AppleAuthentication.AppleAuthenticationButton
                 buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
                 buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -145,9 +178,8 @@ export default function Login() {
                 style={styles.appleBtn}
                 onPress={onApple}
               />
-            ) : null}
-            <PillButton label="Continue with Google" variant="darkOutlined" onPress={onGoogle} fullWidth />
-          </View>
+            </>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
@@ -169,6 +201,5 @@ const styles = StyleSheet.create({
   },
   dividerLine: { flex: 1, height: 1, backgroundColor: palette.inputBorder },
   dividerLabel: { color: palette.textBlackSoft },
-  providers: { gap: space.s3 },
   appleBtn: { height: 52, width: '100%' },
 });

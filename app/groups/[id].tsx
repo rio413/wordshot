@@ -92,8 +92,7 @@ export default function GroupEditScreen() {
       }
       router.back();
     } catch (e: any) {
-      Alert.alert('Could not save group', e?.message ?? 'Unknown error');
-    } finally {
+      Alert.alert('Could not save group', e?.message ?? 'Please try again.');
       setSaving(false);
     }
   };
