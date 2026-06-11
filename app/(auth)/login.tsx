@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Screen } from '@/components/Screen';
@@ -14,11 +14,18 @@ type Mode = 'signin' | 'signup' | 'forgot';
 export default function Login() {
   const { signInWithEmail, signUpWithEmail, signInWithApple, forgotPassword } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(true);
+  const [appleAvailable, setAppleAvailable] = useState(false);
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') {
+      AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
+    }
+  }, []);
 
   const onPrimary = async () => {
     setBusy(true);
@@ -164,7 +171,7 @@ export default function Login() {
             </View>
           )}
 
-          {mode !== 'forgot' && Platform.OS === 'ios' ? (
+          {mode !== 'forgot' && appleAvailable ? (
             <>
               <View style={styles.divider}>
                 <View style={styles.dividerLine} />
