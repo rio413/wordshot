@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support – Word Share</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 24px 100px;
+      color: #1a1a1a;
+      line-height: 1.75;
+      background: #fff;
+    }
+    .lang-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 40px;
+    }
+    .lang-btn {
+      padding: 6px 18px;
+      border: 2px solid #1a1a1a;
+      border-radius: 4px;
+      background: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .lang-btn.active {
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .content { display: none; }
+    .content.active { display: block; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.2em; }
+    h2 { font-size: 1.1rem; font-weight: 700; margin-top: 2.25em; margin-bottom: 0.4em; border-bottom: 1px solid #e5e5e5; padding-bottom: 0.3em; }
+    p, li { font-size: 0.9375rem; color: #333; margin-top: 0.5em; }
+    ul { padding-left: 1.5em; }
+    a { color: #00704A; }
+    .meta { color: #888; font-size: 0.85rem; margin-top: 0.25em; margin-bottom: 2em; }
+    .contact-box {
+      margin-top: 2.5em;
+      padding: 20px 24px;
+      border: 2px solid #1a1a1a;
+      border-radius: 6px;
+      background: #f9f9f7;
+    }
+    .contact-box p { margin: 0; }
+    .nav-links {
+      margin-top: 3em;
+      padding-top: 1.5em;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      gap: 1.5em;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('en')">English</button>
+  <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+</div>
+
+<!-- ===== ENGLISH ===== -->
+<div id="en" class="content active">
+  <h1>Word Share Support</h1>
+  <p class="meta">Need help? We're here for you.</p>
+
+  <h2>About Word Share</h2>
+  <p>Word Share lets you send words to friends and build a personal vocabulary bank together. Fire off a word, your friend swipes to save or discard it — and the ones that stick end up in their bank forever.</p>
+
+  <h2>Frequently Asked Questions</h2>
+
+  <h2>How do I add a friend?</h2>
+  <p>Tap the send icon, then type your friend's username (e.g. <strong>@vocab_buddy</strong>) in the search box. Once they appear, tap their name to select them as a recipient.</p>
+
+  <h2>How do I save a word someone sent me?</h2>
+  <p>Open the <strong>Incoming</strong> tab. Swipe the word card to the right to save it to your Word Bank, or swipe left to discard it.</p>
+
+  <h2>Where are my saved words?</h2>
+  <p>Tap the <strong>Bank</strong> tab at the bottom of the screen to see all the words you have saved.</p>
+
+  <h2>Can I delete a word from my bank?</h2>
+  <p>Yes. Tap any word in your Bank to open its detail view, then tap <strong>Remove from bank</strong>.</p>
+
+  <h2>I forgot my password</h2>
+  <p>On the login screen, tap <strong>Forgot your password?</strong> and enter your email address. A reset link will be sent to your inbox.</p>
+
+  <h2>How do I delete my account?</h2>
+  <p>Go to the <strong>Profile</strong> tab, scroll to the bottom, and tap <strong>Delete account</strong>. This permanently removes your account and all associated data.</p>
+
+  <h2>Sign in with Apple isn't working</h2>
+  <p>Sign in with Apple is available on iPhone only. If you are using an iPad, please sign in with your email and password instead, or create a new account using the <strong>Sign up</strong> option on the login screen.</p>
+
+  <h2>Contact Us</h2>
+  <div class="contact-box">
+    <p>For any other questions or feedback, email us at:<br />
+    <a href="mailto:ryoma.inoue92@gmail.com">ryoma.inoue92@gmail.com</a></p>
+    <p style="margin-top:0.75em; color:#888; font-size:0.875rem;">We aim to respond within 2 business days.</p>
+  </div>
+
+  <div class="nav-links">
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms of Use</a>
+  </div>
+</div>
+
+<!-- ===== JAPANESE ===== -->
+<div id="ja" class="content">
+  <h1>Word Share サポート</h1>
+  <p class="meta">お困りのことがあればお気軽にどうぞ。</p>
+
+  <h2>Word Share について</h2>
+  <p>Word Share は、友達に単語を送り合って、ふたりだけの語彙バンクを作るアプリです。単語を送ると、相手がスワイプして保存か破棄を選択し、気に入った言葉がバンクに残ります。</p>
+
+  <h2>よくある質問</h2>
+
+  <h2>友達を追加するには？</h2>
+  <p>送信アイコンをタップして、友達のユーザー名（例: <strong>@vocab_buddy</strong>）を検索ボックスに入力してください。表示されたら名前をタップして送り先として選択します。</p>
+
+  <h2>送られてきた単語を保存するには？</h2>
+  <p><strong>Incoming（受信）</strong>タブを開き、単語カードを右にスワイプすると Word Bank に保存されます。左にスワイプすると破棄されます。</p>
+
+  <h2>保存した単語はどこで見られますか？</h2>
+  <p>画面下部の <strong>Bank（バンク）</strong>タブをタップすると、保存したすべての単語を確認できます。</p>
+
+  <h2>バンクから単語を削除できますか？</h2>
+  <p>はい。バンク内の単語をタップすると詳細画面が開き、<strong>バンクから削除</strong>をタップすると削除できます。</p>
+
+  <h2>パスワードを忘れました</h2>
+  <p>ログイン画面の <strong>パスワードをお忘れですか？</strong>をタップしてメールアドレスを入力してください。パスワードリセットリンクが送信されます。</p>
+
+  <h2>アカウントを削除したい</h2>
+  <p><strong>プロフィール</strong>タブを開き、画面下部の <strong>アカウントを削除</strong>をタップしてください。アカウントと関連するすべてのデータが完全に削除されます。</p>
+
+  <h2>Sign in with Apple が使えない</h2>
+  <p>Sign in with Apple は iPhone のみ対応しています。iPad をご利用の場合は、メールアドレスとパスワードでサインインするか、ログイン画面の <strong>サインアップ</strong>から新規アカウントを作成してください。</p>
+
+  <h2>お問い合わせ</h2>
+  <div class="contact-box">
+    <p>その他のご質問・ご意見はこちらまでメールをお送りください：<br />
+    <a href="mailto:ryoma.inoue92@gmail.com">ryoma.inoue92@gmail.com</a></p>
+    <p style="margin-top:0.75em; color:#888; font-size:0.875rem;">2営業日以内にご返信いたします。</p>
+  </div>
+
+  <div class="nav-links">
+    <a href="privacy.html">プライバシーポリシー</a>
+    <a href="terms.html">利用規約</a>
+  </div>
+</div>
+
+<script>
+  function setLang(lang) {
+    document.querySelectorAll('.content').forEach((el) => el.classList.remove('active'));
+    document.querySelectorAll('.lang-btn').forEach((el) => el.classList.remove('active'));
+    document.getElementById(lang).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>
