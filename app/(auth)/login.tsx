@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Dimensions, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Screen } from '@/components/Screen';
 import { Text } from '@/components/Text';
@@ -10,6 +10,15 @@ import { palette, space } from '@/constants/theme';
 import { OnboardingAnimation } from '@/components/OnboardingAnimation';
 
 type Mode = 'signin' | 'signup' | 'forgot';
+
+// Detect iPad in any mode.
+// Platform.isPad covers native iPad apps (interfaceIdiom === 'pad').
+// The Dimensions check covers iPhone-compat mode: the physical iPad screen
+// (screen.width) is much wider than the letterboxed iPhone app window
+// (window.width), so the difference exceeds 80pt on all iPads.
+const { width: SCREEN_W } = Dimensions.get('screen');
+const { width: WINDOW_W } = Dimensions.get('window');
+const IS_IPAD = Platform.isPad || SCREEN_W - WINDOW_W > 80;
 
 export default function Login() {
   const { signInWithEmail, signUpWithEmail, signInWithApple, forgotPassword } = useAuth();
@@ -22,7 +31,7 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === 'ios' && !IS_IPAD) {
       AppleAuthentication.isAvailableAsync().then(setAppleAvailable).catch(() => {});
     }
   }, []);
@@ -64,9 +73,11 @@ export default function Login() {
     try {
       await signInWithApple();
     } catch (e: any) {
-      if (e?.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Apple sign-in failed', e?.message ?? 'Please try again.');
-      }
+      if (e?.code === 'ERR_REQUEST_CANCELED') return;
+      // If signInAsync throws for any other reason (e.g. the OS fails to
+      // present the sheet on iPad in compat mode), hide the button silently
+      // rather than showing an error alert. Email/password is right there.
+      setAppleAvailable(false);
     } finally {
       setBusy(false);
     }
